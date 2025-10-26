@@ -1,4 +1,4 @@
-const data = require('../.idea/httpRequests/premier.json')
+const data = require('../JSON_objects/premier.json')
 
 
 data.teams.forEach(team =>
