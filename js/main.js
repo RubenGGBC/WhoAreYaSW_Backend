@@ -46,6 +46,4 @@ Promise.all([fetchJSON("fullplayers25"), fetchJSON("solution25")]).then(
     document.getElementById("mistery").src = `https://playfootball.games/media/players/${game.solution.id % 32}/${game.solution.id}.png`;
   
   }
-
-
 );
