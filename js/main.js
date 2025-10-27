@@ -1,7 +1,8 @@
 import { folder, leftArrow } from "./fragments.js";
 import { fetchJSON } from "./loaders.js";
+import { setupRows } from "./rows.js";
 
-function differenceInDays(date1) {
+export function differenceInDays(date1) {
     // Ejercicio 1:
     let today_date = new Date();
     // Calculamos la diferencia de tiempo en ms y luego la convertimos a días (con Math.ceil para redondear hacia arriba)
@@ -45,5 +46,17 @@ Promise.all([fetchJSON("fullplayers25"), fetchJSON("solution25")]).then(
 
     document.getElementById("mistery").src = `https://playfootball.games/media/players/${game.solution.id % 32}/${game.solution.id}.png`;
   
+    let addRow = setupRows(game);
+    let myInput = document.getElementById("myInput");
+    
+    myInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            if(myInput.value.length > 0){
+                let playerId = parseInt(myInput.value);
+                addRow(playerId);
+                myInput.value = "";
+            }
+        }
+    });
   }
 );

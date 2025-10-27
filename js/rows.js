@@ -1,25 +1,53 @@
+import { differenceInDays } from './main.js';
+import { stringToHTML } from './fragments.js';
 // YOUR CODE HERE :  
 // .... stringToHTML ....
 // .... setupRows .....
-
 const delay = 350;
 const attribs = ['nationality', 'leagueId', 'teamId', 'position', 'birthdate']
 
 
-let setupRows = function (game) {
+export let setupRows = function (game) {
 
 
     function leagueToFlag(leagueId) {
-        // YOUR CODE HERE
+
+        const leagueMap = {
+            564: 'es1',
+            8: 'en1', 
+            82: 'de1',
+            384: 'it1',
+            301: 'fr1'
+        };
+        return leagueMap[leagueId];
     }
 
 
     function getAge(dateString) {
-        // YOUR CODE HERE
+        let fechaN = new Date(dateString);
+        let diferenciadias = differenceInDays(fechaN);
+        let edad = Math.floor(diferenciadias / 365.25);
+        return edad;
     }
     
     let check = function (theKey, theValue) {
-            // YOUR CODE HERE
+        let valorjson = game.solution[theKey];
+        if (theKey === 'birthdate') {
+            let edadjson = getAge(valorjson);
+            let edadAdivinar = getAge(theValue);
+            if (edadjson === edadAdivinar) {
+                return "correct";
+            } else if (edadjson > edadAdivinar) {
+                return "higher";
+            } else {
+                return "lower";
+            }
+        }
+        if (valorjson === theValue) {
+            return "correct";
+        } else {
+            return "incorrect";
+        }
     }
 
     function setContent(guess) {
@@ -56,13 +84,17 @@ let setupRows = function (game) {
     }
 
     let getPlayer = function (playerId) {
-            // YOUR CODE HERE   
+        return game.players.find(player => Number(player.id) === Number(playerId));
     }
 
     return /* addRow */ function (playerId) {
 
         let guess = getPlayer(playerId)
-        console.log(guess)
+
+        if (!guess) {
+            console.error('Player not found with ID:', playerId);
+            return;
+        }
 
         let content = setContent(guess)
         showContent(content, guess)
