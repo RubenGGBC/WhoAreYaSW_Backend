@@ -1,5 +1,6 @@
 import { differenceInDays } from './main.js';
 import { stringToHTML, higher, lower } from './fragments.js';
+import { initState } from './stats.js';
 // YOUR CODE HERE :  
 // .... stringToHTML ....
 // .... setupRows .....
@@ -9,6 +10,7 @@ const attribs = ['nationality', 'leagueId', 'teamId', 'position', 'birthdate']
 
 export let setupRows = function (game) {
 
+    let [state, updateState] = initState('WAYgameState', game.solution.id)
 
     function leagueToFlag(leagueId) {
 
@@ -50,6 +52,39 @@ export let setupRows = function (game) {
         }
     }
 
+    function unblur(outcome) {
+        return new Promise( (resolve, reject) =>  {
+            setTimeout(() => {
+                document.getElementById("mistery").classList.remove("hue-rotate-180", "blur")
+                document.getElementById("combobox").remove()
+                let color, text
+                if (outcome=='success'){
+                    color =  "bg-blue-500"
+                    text = "Awesome"
+                } else {
+                    color =  "bg-rose-500"
+                    text = "The player was " + game.solution.name
+                }
+                document.getElementById("picbox").innerHTML += `<div class="animate-pulse fixed z-20 top-14 left-1/2 transform -translate-x-1/2 max-w-sm shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${color} text-white"><div class="p-4"><p class="text-sm text-center font-medium">${text}</p></div></div>`
+                resolve();
+            }, "2000")
+        })
+    }
+
+    function success(){
+        unblur('success').then( () => {
+
+        })
+    }
+
+    function gameOver(){
+        unblur('gameover').then( () => {
+
+        })
+    }
+
+
+
     function setContent(guess) {
         let ageContent = `${getAge(guess.birthdate)}`;
         let ageCheck = check('birthdate', guess.birthdate);
@@ -58,7 +93,7 @@ export let setupRows = function (game) {
         } else if (ageCheck === 'lower') {
             ageContent += lower;
         }
-        
+
         return [
             `<img src="https://playfootball.games/media/nations/${guess.nationality.toLowerCase()}.svg" alt="" style="width: 60%;">`,
             `<img src="https://playfootball.games/media/competitions/${leagueToFlag(guess.leagueId)}.png" alt="" style="width: 60%;">`,
@@ -91,20 +126,47 @@ export let setupRows = function (game) {
         playersNode.prepend(stringToHTML(child))
     }
 
+    function resetInput(){
+        let input = document.getElementById("myInput");
+        input.placeholder = `Guess ${game.guesses.length + 1} of 8`;
+        input.value = "";
+    }
+
     let getPlayer = function (playerId) {
         return game.players.find(player => Number(player.id) === Number(playerId));
     }
+
+    function gameEnded(lastGuess){
+        return (Number(lastGuess) === Number(game.solution.id)) || (game.guesses.length >= 8)
+    }
+
+    resetInput();
 
     return /* addRow */ function (playerId) {
 
         let guess = getPlayer(playerId)
 
-        if (!guess) {
-            console.error('Player not found with ID:', playerId);
-            return;
+        let content = setContent(guess)
+
+        game.guesses.push(playerId)
+        updateState(playerId)
+
+        resetInput();
+
+        if (gameEnded(playerId)) {
+            // updateStats(game.guesses.length);
+
+            if (playerId == game.solution.id) {
+                console.log("Ha llegado aqui")
+                success();
+            }
+
+            if (game.guesses.length == 8) {
+                gameOver();
+            }
         }
 
-        let content = setContent(guess)
+
         showContent(content, guess)
     }
 }
