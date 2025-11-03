@@ -157,7 +157,6 @@ export let setupRows = function (game) {
             // updateStats(game.guesses.length);
 
             if (playerId == game.solution.id) {
-                console.log("Ha llegado aqui")
                 success();
             }
 
