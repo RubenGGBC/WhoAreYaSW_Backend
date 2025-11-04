@@ -11,7 +11,6 @@ const attribs = ['nationality', 'leagueId', 'teamId', 'position', 'birthdate']
 export let setupRows = function (game) {
 
     let [state, updateState] = initState('WAYgameState', game.solution.id)
-    console.log(state)
 
     let getPlayer = function (playerId) {
         return game.players.find(player => Number(player.id) === Number(playerId));
@@ -41,20 +40,16 @@ export let setupRows = function (game) {
 
         if (state.solution !== game.solution.id) {
             [state, updateState] = crearNuevoInitState('WAYgameState', game.solution.id)
-            console.log("a")
         }
         else{
             if(state.guesses.length > 0) {
 
                 game.guesses = state.guesses;
 
-                console.log(game.guesses);
                 for (let i = 0; i < game.guesses.length; i++) {
                     let guessId = game.guesses[i]
 
                     let guess = getPlayer(guessId);
-
-                    console.log(guess);
 
                     let content = setContent(guess)
                     showContent(content, guess)
@@ -62,8 +57,6 @@ export let setupRows = function (game) {
                 }
 
                 let playerId = game.guesses[game.guesses.length - 1];
-
-                console.log(playerId);
 
                 if (gameEnded(playerId)) {
 
@@ -80,8 +73,6 @@ export let setupRows = function (game) {
     }
 
     recuperarPartida();
-    console.log(state)
-    console.log
 
     function leagueToFlag(leagueId) {
 
