@@ -1,4 +1,4 @@
-export {initState}
+export {initState, updateStats, successRate, getStats}
 
 let initState = function(what, solutionId) {
 
@@ -37,6 +37,44 @@ let initState = function(what, solutionId) {
 
     return arrayResult
 }
+function successRate(e){
+    return e.successRate;
+}
+function getStats(what){
+    let storage=localStorage.getItem(what)
+    if (!storage){
+        let stats={
+        winDistribution: [0,0,0,0,0,0,0,0,0],
+        gamesFailed: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+        totalGames: 0,
+        successRate: 0
+        }
+        localStorage.setItem(what, JSON.stringify(stats))
+        return stats
+    }
+    return JSON.parse(storage)
+};
+
+
+function updateStats(t){
+    let nuevasStats=gamestats
+    let haGanado=t<8
+    nuevasStats.gamesFailed= haGanado ? nuevasStats.gamesFailed : nuevasStats.gamesFailed + 1
+    nuevasStats.currentStreak= haGanado ? nuevasStats.currentStreak + 1 : 0
+    nuevasStats.bestStreak= nuevasStats.currentStreak > nuevasStats.bestStreak ? nuevasStats.currentStreak : nuevasStats.bestStreak
+    nuevasStats.totalGames=nuevasStats.totalGames + 1
+    if (haGanado) {
+        nuevasStats.winDistribution[t-1] = nuevasStats.winDistribution[t-1] + 1
+    }
+    nuevasStats.successRate= (nuevasStats.totalGames-nuevasStats.gamesFailed)/nuevasStats.totalGames
+
+    localStorage.setItem('gameStats', JSON.stringify(nuevasStats))
+};
+
+
+let gamestats = getStats('gameStats');
 
 
 

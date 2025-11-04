@@ -1,6 +1,6 @@
 import { differenceInDays } from './main.js';
-import { stringToHTML, higher, lower } from './fragments.js';
-import { initState } from './stats.js';
+import { stringToHTML, higher, lower, stats, headless, toggle } from './fragments.js';
+import { initState, updateStats } from './stats.js';
 // YOUR CODE HERE :  
 // .... stringToHTML ....
 // .... setupRows .....
@@ -73,15 +73,59 @@ export let setupRows = function (game) {
 
     function success(){
         unblur('success').then( () => {
-
+            showStats(2000);
         })
     }
 
     function gameOver(){
         unblur('gameover').then( () => {
-
+            showStats(2000);
         })
     }
+     function showStats(timeout) {
+        return new Promise( (resolve, reject) =>  {
+            setTimeout(() => {
+                document.body.appendChild(stringToHTML(headless(stats())));
+
+                let interval = setInterval(() => {
+                    let now = new Date();
+                    let midnight = new Date();
+                    midnight.setHours(24, 0, 0, 0);
+
+                    let diff = midnight - now;
+
+                    let hours = Math.floor(diff / (1000 * 60 * 60));
+                    let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    let seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                    let nextPlayerElement = document.getElementById("nextPlayer");
+                    if (nextPlayerElement) {
+                        nextPlayerElement.textContent =
+                            String(hours).padStart(2, '0') + ':' +
+                            String(minutes).padStart(2, '0') + ':' +
+                            String(seconds).padStart(2, '0');
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 1000);
+
+                let showHideBtn = document.getElementById("showHide");
+                if (showHideBtn) {
+                    showHideBtn.onclick = toggle;
+                }
+
+                bindClose();
+                resolve();
+            }, timeout)
+        })
+    }
+     function bindClose() {
+        document.getElementById("closedialog").onclick = function () {
+            document.body.removeChild(document.body.lastChild)
+            document.getElementById("mistery").classList.remove("hue-rotate-180", "blur")
+        }
+    }
+
 
 
 
@@ -154,7 +198,7 @@ export let setupRows = function (game) {
         resetInput();
 
         if (gameEnded(playerId)) {
-            // updateStats(game.guesses.length);
+             updateStats(game.guesses.length);
 
             if (playerId == game.solution.id) {
                 console.log("Ha llegado aqui")
@@ -169,4 +213,5 @@ export let setupRows = function (game) {
 
         showContent(content, guess)
     }
+    
 }
