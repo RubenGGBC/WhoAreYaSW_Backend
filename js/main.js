@@ -13,7 +13,6 @@ export function differenceInDays(date1) {
 }
 
 let difference_In_Days = differenceInDays(new Date("01-10-2025"));
-
 window.onload = function () {
   document.getElementById("gamenumber").innerText = difference_In_Days.toString();
   document.getElementById("back-icon").innerHTML = folder + leftArrow;

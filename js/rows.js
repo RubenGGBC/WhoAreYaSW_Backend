@@ -1,6 +1,6 @@
 import { differenceInDays } from './main.js';
 import { stringToHTML, higher, lower, stats, headless, toggle } from './fragments.js';
-import { initState, updateStats } from './stats.js';
+import { initState, crearNuevoInitState, updateStats } from './stats.js';
 // YOUR CODE HERE :  
 // .... stringToHTML ....
 // .... setupRows .....
@@ -11,6 +11,77 @@ const attribs = ['nationality', 'leagueId', 'teamId', 'position', 'birthdate']
 export let setupRows = function (game) {
 
     let [state, updateState] = initState('WAYgameState', game.solution.id)
+    console.log(state)
+
+    let getPlayer = function (playerId) {
+        return game.players.find(player => Number(player.id) === Number(playerId));
+    }
+
+    let check = function (theKey, theValue) {
+        let valorjson = game.solution[theKey];
+        if (theKey === 'birthdate') {
+            let edadjson = getAge(valorjson);
+            let edadAdivinar = getAge(theValue);
+            if (edadjson === edadAdivinar) {
+                return "correct";
+            } else if (edadjson > edadAdivinar) {
+                return "higher";
+            } else {
+                return "lower";
+            }
+        }
+        if (valorjson === theValue) {
+            return "correct";
+        } else {
+            return "incorrect";
+        }
+    }
+
+    function recuperarPartida() {
+
+        if (state.solution !== game.solution.id) {
+            [state, updateState] = crearNuevoInitState('WAYgameState', game.solution.id)
+            console.log("a")
+        }
+        else{
+            if(state.guesses.length > 0) {
+
+                game.guesses = state.guesses;
+
+                console.log(game.guesses);
+                for (let i = 0; i < game.guesses.length; i++) {
+                    let guessId = game.guesses[i]
+
+                    let guess = getPlayer(guessId);
+
+                    console.log(guess);
+
+                    let content = setContent(guess)
+                    showContent(content, guess)
+
+                }
+
+                let playerId = game.guesses[game.guesses.length - 1];
+
+                console.log(playerId);
+
+                if (gameEnded(playerId)) {
+
+                    if (playerId == game.solution.id) {
+                        success();
+                    }
+
+                    if (game.guesses.length === 8) {
+                        gameOver();
+                    }
+                }
+            }
+        }
+    }
+
+    recuperarPartida();
+    console.log(state)
+    console.log
 
     function leagueToFlag(leagueId) {
 
@@ -30,26 +101,6 @@ export let setupRows = function (game) {
         let diferenciadias = differenceInDays(fechaN);
         let edad = Math.floor(diferenciadias / 365.25);
         return edad;
-    }
-    
-    let check = function (theKey, theValue) {
-        let valorjson = game.solution[theKey];
-        if (theKey === 'birthdate') {
-            let edadjson = getAge(valorjson);
-            let edadAdivinar = getAge(theValue);
-            if (edadjson === edadAdivinar) {
-                return "correct";
-            } else if (edadjson > edadAdivinar) {
-                return "higher";
-            } else {
-                return "lower";
-            }
-        }
-        if (valorjson === theValue) {
-            return "correct";
-        } else {
-            return "incorrect";
-        }
     }
 
     function unblur(outcome) {
@@ -174,10 +225,6 @@ export let setupRows = function (game) {
         let input = document.getElementById("myInput");
         input.placeholder = `Guess ${game.guesses.length + 1} of 8`;
         input.value = "";
-    }
-
-    let getPlayer = function (playerId) {
-        return game.players.find(player => Number(player.id) === Number(playerId));
     }
 
     function gameEnded(lastGuess){

@@ -1,4 +1,4 @@
-export {initState, updateStats, successRate, getStats}
+export {initState, crearNuevoInitState, updateStats, successRate, getStats}
 
 let initState = function(what, solutionId) {
 
@@ -37,6 +37,33 @@ let initState = function(what, solutionId) {
 
     return arrayResult
 }
+
+let crearNuevoInitState = function(what, solutionId) {
+
+    localStorage.removeItem(what);
+
+    let arrayResult = []
+
+    arrayResult[0] = {
+        "guesses": [],
+        "solution": solutionId
+    }
+
+    localStorage.setItem(what, JSON.stringify(arrayResult[0]));
+
+    arrayResult[1] = function (guess){
+
+        let state = localStorage.getItem(what)
+        state = JSON.parse(state)
+        state.guesses.push(guess);
+        localStorage.setItem(what, JSON.stringify(state))
+        arrayResult[0] = state;
+    }
+
+    return arrayResult
+}
+
+
 function successRate(e){
     return e.successRate;
 }
