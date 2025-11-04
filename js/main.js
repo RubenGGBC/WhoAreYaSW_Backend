@@ -41,8 +41,6 @@ Promise.all([fetchJSON("fullplayers25"), fetchJSON("solution25")]).then(
     [game.players, solution] = values;
 
     game.solution = getSolution(game.players, solution, difference_In_Days);
-    
-    console.log(game.solution);
 
     document.getElementById("mistery").src = `https://playfootball.games/media/players/${game.solution.id % 32}/${game.solution.id}.png`;
   
