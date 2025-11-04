@@ -29,19 +29,24 @@ function autocomplete(inp, game) {
         /*for each item in the array...*/
         for (i = 0; i < players.length; i++) {
             /*check if the item contains the same letters as the text field value:*/
-            if (players[i].name.toUpperCase().indexOf(val.toUpperCase()) !== -1) {
+            let matches = window.match(players[i].name, val, {insideWords: true});
+            if (matches.length > 0) {
 
                 b = document.createElement("DIV");
                 b.classList.add('flex', 'items-start', 'gap-x-3', 'leading-tight', 'uppercase', 'text-sm');
                 b.innerHTML = `<img src="https://cdn.sportmonks.com/images/soccer/teams/${players[i].teamId % 32}/${players[i].teamId}.png"  width="28" height="28">`;
 
-                /*make the matching letters bold:*/
-                let startIndex = players[i].name.toUpperCase().indexOf(val.toUpperCase());
-                let beforeMatch = players[i].name.substr(0, startIndex);
-                let match = players[i].name.substr(startIndex, val.length);
-                let afterMatch = players[i].name.substr(startIndex + val.length);
+                let parts = window.parse(players[i].name, matches);
+                let highlightedName = parts.map(part => {
+                    if (part.highlight) {
+                        return `<span style='color: black; font-weight: bold;'>${part.text}</span>`;
+                    } else {
+                        return `<span>${part.text}</span>`;
+                    }
+                }).join('');
+
                 b.innerHTML += `<div class='self-center'>
-                                    <span>${beforeMatch}</span><span style='color: black; font-weight: bold;'>${match}</span><span>${afterMatch}</span>
+                                    ${highlightedName}
                                     <input type='hidden' name='name' value='${players[i].name}'>
                                     <input type='hidden' name='id' value='${players[i].id}'>
                                 </div>`;
