@@ -1,12 +1,24 @@
 import { differenceInDays } from './main.js';
 import { stringToHTML, higher, lower, stats, headless, toggle } from './fragments.js';
 import { initState, crearNuevoInitState, updateStats } from './stats.js';
-// YOUR CODE HERE :  
+// YOUR CODE HERE :
 // .... stringToHTML ....
 // .... setupRows .....
 const delay = 350;
-const attribs = ['pokemonId', 'type1', 'type2', 'weight']
 
+function getGeneration(pokemonId) {
+    const id = Number(pokemonId);
+    if (id >= 1 && id <= 151) return 1;
+    if (id >= 152 && id <= 251) return 2;
+    if (id >= 252 && id <= 386) return 3;
+    if (id >= 387 && id <= 493) return 4;
+    if (id >= 494 && id <= 649) return 5;
+    if (id >= 650 && id <= 721) return 6;
+    if (id >= 722 && id <= 809) return 7;
+    if (id >= 810 && id <= 905) return 8;
+    if (id >= 906 && id <= 1025) return 9;
+    return 0;
+}
 
 export let setupRows = function (game) {
 
@@ -18,12 +30,12 @@ export let setupRows = function (game) {
 
     let check = function (theKey, theValue) {
         let valorjson = game.solution[theKey];
-        if (theKey === 'pokemonId') {
-            let solId = Number(valorjson);
-            let guessId = Number(theValue);
-            if (solId === guessId) {
+        if (theKey === 'generation') {
+            let solGen = getGeneration(game.solution.pokemonId);
+            let guessGen = Number(theValue);
+            if (solGen === guessGen) {
                 return "correct";
-            } else if (solId > guessId) {
+            } else if (solGen > guessGen) {
                 return "higher";
             } else {
                 return "lower";
@@ -88,7 +100,7 @@ export let setupRows = function (game) {
     function unblur(outcome) {
         return new Promise( (resolve, reject) =>  {
             setTimeout(() => {
-                document.getElementById("mistery").classList.remove("hue-rotate-180", "blur")
+                document.getElementById("mistery").classList.remove("blur")
                 document.getElementById("combobox").remove()
                 let color, text
                 if (outcome=='success'){
@@ -155,17 +167,18 @@ export let setupRows = function (game) {
      function bindClose() {
         document.getElementById("closedialog").onclick = function () {
             document.body.removeChild(document.body.lastChild)
-            document.getElementById("mistery").classList.remove("hue-rotate-180", "blur")
+            document.getElementById("mistery").classList.remove("blur")
         }
     }
 
     function setContent(guess) {
-        let idContent = `#${guess.pokemonId}`;
-        let idCheck = check('pokemonId', guess.pokemonId);
-        if (idCheck === 'higher') {
-            idContent += higher;
-        } else if (idCheck === 'lower') {
-            idContent += lower;
+        let generation = getGeneration(guess.pokemonId);
+        let genContent = `Gen ${generation}`;
+        let genCheck = check('generation', generation);
+        if (genCheck === 'higher') {
+            genContent += higher;
+        } else if (genCheck === 'lower') {
+            genContent += lower;
         }
 
         let weightContent = `${guess.weight}`;
@@ -178,20 +191,24 @@ export let setupRows = function (game) {
 
         return [
             {
-                content: idContent,
-                label: 'ID'
+                content: genContent,
+                label: 'GEN',
+                checkResult: genCheck
             },
             {
                 content: `${guess.type1}`,
-                label: 'TYPE 1'
+                label: 'TYPE 1',
+                checkResult: check('type1', guess.type1)
             },
             {
                 content: `${guess.type2}`,
-                label: 'TYPE 2'
+                label: 'TYPE 2',
+                checkResult: check('type2', guess.type2)
             },
             {
                 content: weightContent,
-                label: 'WEIGHT'
+                label: 'WEIGHT',
+                checkResult: weightCheck
             }
         ]
     }
@@ -212,7 +229,7 @@ export let setupRows = function (game) {
             s = "".concat(((j + 1) * delay).toString(), "ms")
             fragments += `<div class="flex-1 min-w-0 flex justify-center">
                 <div class="flex flex-col items-center gap-1">
-                    <div class="mx-1 overflow-hidden w-full shadowed font-bold text-base flex aspect-square rounded-full justify-center items-center bg-slate-400 text-white ${check(attribs[j], guess[attribs[j]]) == 'correct' ? 'bg-green-500' : ''} opacity-0 fadeInDown" style="max-width: 60px; min-height: 60px; animation-delay: ${s};">
+                    <div class="mx-1 overflow-hidden w-full shadowed font-bold text-base flex aspect-square rounded-full justify-center items-center bg-slate-400 text-white ${content[j].checkResult == 'correct' ? 'bg-green-500' : ''} opacity-0 fadeInDown" style="max-width: 60px; min-height: 60px; animation-delay: ${s};">
                         <div class="flex items-center justify-center w-full h-full p-1">
                             ${content[j].content}
                         </div>
