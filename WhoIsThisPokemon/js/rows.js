@@ -5,36 +5,36 @@ import { initState, crearNuevoInitState, updateStats } from './stats.js';
 // .... stringToHTML ....
 // .... setupRows .....
 const delay = 350;
-const attribs = ['nationality', 'leagueId', 'teamId', 'position', 'birthdate', 'number']
+const attribs = ['pokemonId', 'type1', 'type2', 'weight']
 
 
 export let setupRows = function (game) {
 
-    let [state, updateState] = initState('WAYgameState', game.solution.id)
+    let [state, updateState] = initState('WAYgameState', game.solution.pokemonId)
 
-    let getPlayer = function (playerId) {
-        return game.players.find(player => Number(player.id) === Number(playerId));
+    let getPokemon = function (pokemonId) {
+        return game.pokemons.find(pokemon => Number(pokemon.pokemonId) === Number(pokemonId));
     }
 
     let check = function (theKey, theValue) {
         let valorjson = game.solution[theKey];
-        if (theKey === 'birthdate') {
-            let edadjson = getAge(valorjson);
-            let edadAdivinar = getAge(theValue);
-            if (edadjson === edadAdivinar) {
+        if (theKey === 'pokemonId') {
+            let solId = Number(valorjson);
+            let guessId = Number(theValue);
+            if (solId === guessId) {
                 return "correct";
-            } else if (edadjson > edadAdivinar) {
+            } else if (solId > guessId) {
                 return "higher";
             } else {
                 return "lower";
             }
         }
-        if (theKey === 'number') {
-            let solNum = Number(valorjson);
-            let guessNum = Number(theValue);
-            if (solNum === guessNum) {
+        if (theKey === 'weight') {
+            let solWeight = Number(valorjson);
+            let guessWeight = Number(theValue);
+            if (solWeight === guessWeight) {
                 return "correct";
-            } else if (solNum > guessNum) {
+            } else if (solWeight > guessWeight) {
                 return "higher";
             } else {
                 return "lower";
@@ -49,8 +49,8 @@ export let setupRows = function (game) {
 
     function recuperarPartida() {
 
-        if (state.solution !== game.solution.id) {
-            [state, updateState] = crearNuevoInitState('WAYgameState', game.solution.id)
+        if (state.solution !== game.solution.pokemonId) {
+            [state, updateState] = crearNuevoInitState('WAYgameState', game.solution.pokemonId)
         }
         else{
             if(state.guesses.length > 0) {
@@ -60,18 +60,18 @@ export let setupRows = function (game) {
                 for (let i = 0; i < game.guesses.length; i++) {
                     let guessId = game.guesses[i]
 
-                    let guess = getPlayer(guessId);
+                    let guess = getPokemon(guessId);
 
                     let content = setContent(guess)
                     showContent(content, guess)
 
                 }
 
-                let playerId = game.guesses[game.guesses.length - 1];
+                let pokemonId = game.guesses[game.guesses.length - 1];
 
-                if (gameEnded(playerId)) {
+                if (gameEnded(pokemonId)) {
 
-                    if (playerId == game.solution.id) {
+                    if (pokemonId == game.solution.pokemonId) {
                         success();
                     }
 
@@ -85,26 +85,6 @@ export let setupRows = function (game) {
 
     recuperarPartida();
 
-    function leagueToFlag(leagueId) {
-
-        const leagueMap = {
-            564: 'es1',
-            8: 'en1', 
-            82: 'de1',
-            384: 'it1',
-            301: 'fr1'
-        };
-        return leagueMap[leagueId];
-    }
-
-
-    function getAge(dateString) {
-        let fechaN = new Date(dateString);
-        let diferenciadias = differenceInDays(fechaN);
-        let edad = Math.floor(diferenciadias / 365.25);
-        return edad;
-    }
-
     function unblur(outcome) {
         return new Promise( (resolve, reject) =>  {
             setTimeout(() => {
@@ -116,7 +96,7 @@ export let setupRows = function (game) {
                     text = "Awesome"
                 } else {
                     color =  "bg-rose-500"
-                    text = "The player was " + game.solution.name
+                    text = "The pokémon was " + game.solution.pokemonName
                 }
                 document.getElementById("picbox").innerHTML += `<div class="animate-pulse fixed z-20 top-14 left-1/2 transform -translate-x-1/2 max-w-sm shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${color} text-white"><div class="p-4"><p class="text-sm text-center font-medium">${text}</p></div></div>`
                 resolve();
@@ -180,46 +160,38 @@ export let setupRows = function (game) {
     }
 
     function setContent(guess) {
-        let ageContent = `${getAge(guess.birthdate)}`;
-        let ageCheck = check('birthdate', guess.birthdate);
-        if (ageCheck === 'higher') {
-            ageContent += higher;
-        } else if (ageCheck === 'lower') {
-            ageContent += lower;
+        let idContent = `#${guess.pokemonId}`;
+        let idCheck = check('pokemonId', guess.pokemonId);
+        if (idCheck === 'higher') {
+            idContent += higher;
+        } else if (idCheck === 'lower') {
+            idContent += lower;
         }
 
-        let numberContent = `#${guess.number}`;
-        let numberCheck = check('number', guess.number);
-        if (numberCheck === 'higher') {
-            numberContent += higher;
-        } else if (numberCheck === 'lower') {
-            numberContent += lower;
+        let weightContent = `${guess.weight}`;
+        let weightCheck = check('weight', guess.weight);
+        if (weightCheck === 'higher') {
+            weightContent += higher;
+        } else if (weightCheck === 'lower') {
+            weightContent += lower;
         }
 
         return [
             {
-                content: `<img src="https://playfootball.games/media/nations/${guess.nationality.toLowerCase()}.svg" alt="" style="width: 60%;">`,
-                label: 'NAT'
+                content: idContent,
+                label: 'ID'
             },
             {
-                content: `<img src="https://playfootball.games/media/competitions/${leagueToFlag(guess.leagueId)}.png" alt="" style="width: 60%;">`,
-                label: 'LGE'
+                content: `${guess.type1}`,
+                label: 'TYPE 1'
             },
             {
-                content: `<img src="https://cdn.sportmonks.com/images/soccer/teams/${guess.teamId % 32}/${guess.teamId}.png" alt="" style="width: 60%;">`,
-                label: 'TEAM'
+                content: `${guess.type2}`,
+                label: 'TYPE 2'
             },
             {
-                content: `${guess.position}`,
-                label: 'POS'
-            },
-            {
-                content: ageContent,
-                label: 'AGE'
-            },
-            {
-                content: numberContent,
-                label: 'SHIRT'
+                content: weightContent,
+                label: 'WEIGHT'
             }
         ]
     }
@@ -231,7 +203,7 @@ export let setupRows = function (game) {
     }
 
     function gameEnded(lastGuess){
-        return (Number(lastGuess) === Number(game.solution.id)) || (game.guesses.length >= 8)
+        return (Number(lastGuess) === Number(game.solution.pokemonId)) || (game.guesses.length >= 8)
     }
 
     function showContent(content, guess) {
@@ -255,7 +227,7 @@ export let setupRows = function (game) {
         let child = `<div class="flex flex-col w-full text-l py-2">
             <div class="w-full text-center pb-2">
                 <div class="mx-1 overflow-hidden h-full flex items-center justify-center px-4 uppercase font-bold text-lg opacity-0 fadeInDown" style="animation-delay: 0ms;">
-                    ${guess.name}
+                    ${guess.pokemonName}
                 </div>
             </div>
             <div class="flex w-full justify-center gap-1">
@@ -269,21 +241,21 @@ export let setupRows = function (game) {
 
     resetInput();
 
-    return /* addRow */ function (playerId) {
+    return /* addRow */ function (pokemonId) {
 
-        let guess = getPlayer(playerId)
+        let guess = getPokemon(pokemonId)
 
         let content = setContent(guess)
 
-        game.guesses.push(playerId)
-        updateState(playerId)
+        game.guesses.push(pokemonId)
+        updateState(pokemonId)
 
         resetInput();
 
-        if (gameEnded(playerId)) {
+        if (gameEnded(pokemonId)) {
              updateStats(game.guesses.length);
 
-            if (playerId == game.solution.id) {
+            if (pokemonId == game.solution.pokemonId) {
                 success();
             }
 

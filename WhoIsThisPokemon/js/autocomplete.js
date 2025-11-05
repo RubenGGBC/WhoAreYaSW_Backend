@@ -6,7 +6,7 @@ function autocomplete(inp, game) {
 
     let addRow = setupRows(game);
 
-    let players = game.players;
+    let pokemons = game.pokemons;
 
     /*the autocomplete function takes two arguments,
     the text field element and an array of possible autocompleted values:*/
