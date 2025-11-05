@@ -27,16 +27,16 @@ function autocomplete(inp, game) {
         /*append the DIV element as a child of the autocomplete container:*/
         this.parentNode.appendChild(a);
         /*for each item in the array...*/
-        for (i = 0; i < players.length; i++) {
+        for (i = 0; i < pokemons.length; i++) {
             /*check if the item contains the same letters as the text field value:*/
-            let matches = window.match(players[i].name, val, {insideWords: true});
+            let matches = window.match(pokemons[i].pokemonName, val, {insideWords: true});
             if (matches.length > 0) {
 
                 b = document.createElement("DIV");
                 b.classList.add('flex', 'items-start', 'gap-x-3', 'leading-tight', 'uppercase', 'text-sm');
-                b.innerHTML = `<img src="https://cdn.sportmonks.com/images/soccer/teams/${players[i].teamId % 32}/${players[i].teamId}.png"  width="28" height="28">`;
+                b.innerHTML = `<img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemons[i].pokemonId}.png"  width="28" height="28">`;
 
-                let parts = window.parse(players[i].name, matches);
+                let parts = window.parse(pokemons[i].pokemonName, matches);
                 let highlightedName = parts.map(part => {
                     if (part.highlight) {
                         return `<span style='color: black; font-weight: bold;'>${part.text}</span>`;
@@ -47,8 +47,8 @@ function autocomplete(inp, game) {
 
                 b.innerHTML += `<div class='self-center'>
                                     ${highlightedName}
-                                    <input type='hidden' name='name' value='${players[i].name}'>
-                                    <input type='hidden' name='id' value='${players[i].id}'>
+                                    <input type='hidden' name='name' value='${pokemons[i].pokemonName}'>
+                                    <input type='hidden' name='id' value='${pokemons[i].pokemonId}'>
                                 </div>`;
 
                 /*execute a function when someone clicks on the item value (DIV element):*/

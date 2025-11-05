@@ -30,7 +30,7 @@ export const stats = function () {
 
     blocks += `<div class="mt-2 justify-center items-center space-x-2 dark:text-white">
                     <div>
-                        <h5>New footballer:</h5>
+                        <h5>New Pokemon:</h5>
                         <span class="text-lg font-medium text-gray-900 dark:text-gray-100" id="nextPlayer"></span>
                     </div>
                </div>
@@ -38,7 +38,10 @@ export const stats = function () {
                </div>
                <div class="dark:text-white">
                    <div class="text-lg font-extrabold text-[#b837c6] dark:text-[#ceff27]" style="color: #ceff27">Web Sistemak</div>
-                   <div class="text-sm">2025/2026 ikasturteko praktika</div>
+                   <div class="text-sm">2025/2026 ikasturteko praktika por Ruben Gallego y Mikel Berasategui (las cabras)</div>
+               </div>
+               <div class="mt-3 text-center">
+                   <img src="scraping/imagen ganador.jpeg" alt="Winner" class="mx-auto rounded-lg max-w-full h-auto">
                </div>
                </div></div></div></div>`
 

@@ -10,7 +10,7 @@ const attribs = ['pokemonId', 'type1', 'type2', 'weight']
 
 export let setupRows = function (game) {
 
-    let [state, updateState] = initState('WAYgameState', game.solution.pokemonId)
+    let [state, updateState] = initState('WITPgamestate', game.solution.pokemonId)
 
     let getPokemon = function (pokemonId) {
         return game.pokemons.find(pokemon => Number(pokemon.pokemonId) === Number(pokemonId));
