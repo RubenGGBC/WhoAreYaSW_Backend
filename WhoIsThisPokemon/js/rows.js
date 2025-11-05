@@ -229,7 +229,7 @@ export let setupRows = function (game) {
             s = "".concat(((j + 1) * delay).toString(), "ms")
             fragments += `<div class="flex-1 min-w-0 flex justify-center">
                 <div class="flex flex-col items-center gap-1">
-                    <div class="mx-1 overflow-hidden w-full shadowed font-bold text-base flex aspect-square rounded-full justify-center items-center bg-slate-400 text-white ${content[j].checkResult == 'correct' ? 'bg-green-500' : ''} opacity-0 fadeInDown" style="max-width: 60px; min-height: 60px; animation-delay: ${s};">
+                    <div class="mx-1 overflow-hidden w-full shadowed font-bold text-sm flex aspect-square rounded-full justify-center items-center bg-slate-400 text-white ${content[j].checkResult == 'correct' ? 'bg-green-500' : ''} opacity-0 fadeInDown" style="max-width: 75px; min-height: 75px; animation-delay: ${s};">
                         <div class="flex items-center justify-center w-full h-full p-1">
                             ${content[j].content}
                         </div>
