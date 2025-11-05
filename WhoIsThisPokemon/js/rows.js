@@ -50,7 +50,7 @@ export let setupRows = function (game) {
     function recuperarPartida() {
 
         if (state.solution !== game.solution.pokemonId) {
-            [state, updateState] = crearNuevoInitState('WAYgameState', game.solution.pokemonId)
+            [state, updateState] = crearNuevoInitState('WITPgamestate', game.solution.pokemonId)
         }
         else{
             if(state.guesses.length > 0) {

@@ -97,11 +97,11 @@ function updateStats(t){
     }
     nuevasStats.successRate= (nuevasStats.totalGames-nuevasStats.gamesFailed)/nuevasStats.totalGames
 
-    localStorage.setItem('WITPgamestate', JSON.stringify(nuevasStats))
+    localStorage.setItem('WITPgamestats', JSON.stringify(nuevasStats))
 };
 
 
-let gamestats = getStats('WITPgamestate');
+let gamestats = getStats('WITPgamestats');
 
 
 
