@@ -41,7 +41,7 @@ export const stats = function () {
                    <div class="text-sm">2025/2026 ikasturteko praktika: Pokémon edizioa. Copyright: Ruben Gallego, Mikel Berasategui eta Oihane Pereira</div>
                </div>
                <div class="mt-3 text-center">
-                   <img src="scraping/imagen ganador.jpeg" alt="Winner" class="mx-auto rounded-lg max-w-full h-auto">
+                   <img src="imagen ganador.jpeg" alt="Winner" class="mx-auto rounded-lg max-w-full h-auto">
                </div>
                </div></div></div></div>`
 
