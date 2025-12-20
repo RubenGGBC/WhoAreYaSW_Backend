@@ -198,15 +198,15 @@ export let setupRows = function (game) {
 
         return [
             {
-                content: `<img src="https://playfootball.games/media/nations/${guess.nationality.toLowerCase()}.svg" alt="" style="width: 60%;">`,
+                content: `<img src="/images/nations/${guess.nationality.toLowerCase()}.svg" alt="" style="width: 60%;">`,
                 label: 'NAT'
             },
             {
-                content: `<img src="https://playfootball.games/media/competitions/${leagueToFlag(guess.leagueId)}.png" alt="" style="width: 60%;">`,
+                content: `<img src="/images/leagues/${leagueToFlag(guess.leagueId)}.png" alt="" style="width: 60%;">`,
                 label: 'LGE'
             },
             {
-                content: `<img src="https://cdn.sportmonks.com/images/soccer/teams/${guess.teamId % 32}/${guess.teamId}.png" alt="" style="width: 60%;">`,
+                content: `<img src="/images/teams/${guess.teamId}.png" alt="" style="width: 60%;">`,
                 label: 'TEAM'
             },
             {
