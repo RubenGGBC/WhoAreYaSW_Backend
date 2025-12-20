@@ -455,7 +455,7 @@ async function downloadResources(inputFile, outputDir, urlBuilder) {
   // y que sabe cómo construir la URL para cada tipo de recurso
   for (let idx = 0; idx < data.length; idx++) {
     const elem = data[idx];
-    const { url, filename } = urlBuilder(elem, idx);  // ¡Llamamos a la función!
+    const { url, filename } = urlBuilder(elem, idx);
     
     await new Promise((resolve) => {
       setTimeout(() => {
@@ -548,4 +548,240 @@ Para que los scripts funcionen, necesitas estos archivos en la raíz del proyect
 
 
 ---
+
+## Milestone 2: MongoDB - Configuración y Modelos
+
+### ¿Qué hemos hecho?
+
+Conectamos la app a MongoDB y creamos los esquemas (moldes) para nuestros datos. Así, MongoDB sabe exactamente cómo deben verse los jugadores, equipos y ligas.
+
+### Archivos creados
+
+```
+src/
+├── db/
+│   ├── connection.js           ← Conexión a MongoDB
+│   └── seeders/
+│       └── seedPlayers.js      ← Script para llenar la BD
+│
+└── models/
+    ├── League.js               ← Esquema de ligas
+    ├── Team.js                 ← Esquema de equipos
+    └── Player.js               ← Esquema de jugadores
+```
+
+### 1. Conexión a MongoDB (src/db/connection.js)
+
+Este archivo conecta tu app con MongoDB usando Mongoose.
+
+```javascript
+const mongoose = require('mongoose');
+
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya';
+
+async function connectDB() {
+  try {
+    await mongoose.connect(MONGO_URI);
+    console.log('Conectado a MongoDB:', MONGO_URI);
+  } catch (error) {
+    console.error('Error conectando a MongoDB:', error.message);
+    process.exit(1);
+  }
+}
+
+module.exports = { connectDB, mongoose };
+```
+
+**¿Qué hace?**
+- `mongoose.connect()` → Se conecta a MongoDB
+- Si falla → `process.exit(1)` mata el servidor (no queremos un app sin BD)
+- Si funciona → Console dice que está conectado
+
+---
+
+### 2. Esquema de League (src/models/League.js)
+
+Define cómo se ve una **liga** en la BD.
+
+```javascript
+const { mongoose } = require('../db/connection');
+
+const leagueSchema = new mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: true,
+    minlength: 2
+  },
+  code: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  country: String,
+  flagUrl: String
+});
+
+module.exports = mongoose.model('League', leagueSchema);
+```
+
+**Validaciones:**
+- `id` → Número único (no puede haber dos con el mismo)
+- `name` → String obligatorio, mínimo 2 caracteres
+- `code` → Código único (ej: 'de1', 'en1')
+- `country` y `flagUrl` → Opcionales
+
+---
+
+### 3. Esquema de Team (src/models/Team.js)
+
+Define cómo se ve un **equipo** en la BD.
+
+```javascript
+const { mongoose } = require('../db/connection');
+
+const teamSchema = new mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: true,
+    minlength: 2
+  },
+  leagueId: {
+    type: Number,
+    required: true
+  },
+  logoUrl: String,
+  country: String,
+  stadium: String
+});
+
+module.exports = mongoose.model('Team', teamSchema);
+```
+
+**Validaciones:**
+- `id` → Número único
+- `name` → String obligatorio, mínimo 2 caracteres
+- `leagueId` → Número obligatorio (relaciona el equipo con una liga)
+- Resto → Opcionales
+
+---
+
+### 4. Esquema de Player (src/models/Player.js)
+
+Define cómo se ve un **jugador** en la BD.
+
+```javascript
+const { mongoose } = require('../db/connection');
+
+const playerSchema = new mongoose.Schema({
+  id: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  name: {
+    type: String,
+    required: true,
+    minlength: 2
+  },
+  birthDate: Date,
+  nationality: String,
+  teamId: Number,
+  leagueId: Number,
+  position: {
+    type: String,
+    enum: ['DF', 'MF', 'FW', 'GK'],
+    required: true
+  },
+  number: Number,
+  imageUrl: String,
+
+
+module.exports = mongoose.model('Player', playerSchema);
+```
+
+**Validaciones**
+- `position` → Usa `enum` para limitar a solo 4 valores: DF (defensa), MF (mediocampo), FW (delantero), GK (portero)
+- Si intentas guardar `position: "INVALID"` → MongoDB rechaza 
+- Solo acepta los 4 valores válidos 
+
+---
+
+### 5. Script Seed (src/db/seeders/seedPlayers.js)
+
+Este script llena la BD con los 2038 jugadores que descargamos en el Milestone 1.
+
+**¿Qué hace?**
+```javascript
+1. Conecta a MongoDB
+2. Borra datos viejos (si existen)
+3. Lee el archivo fullplayers25.json
+4. Extrae ligas y equipos únicos
+5. Inserta todo en la BD
+   - 4 ligas
+   - 78 equipos
+   - 2038 jugadores
+```
+
+**Ejecutar:**
+```bash
+ node src/db/seeders/seedPlayers.js
+```
+
+**Output esperado:**
+```
+Conectado a MongoDB: mongodb://localhost:27017/whoareya
+Insertando 4 ligas...
+Insertando 78 equipos...
+Insertando 2038 jugadores...
+Base de datos poblada correctamente
+   - 4 ligas
+   - 78 equipos
+   - 2038 jugadores
+```
+
+---
+
+### 6. Actualización de server.js
+
+Para que todo funcione, `server.js` debe llamar a `connectDB()`:
+
+```javascript
+const app = require('./src/app');
+const { connectDB } = require('./src/db/connection');
+
+const PORT = process.env.PORT || 3000;
+
+async function startServer() {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error iniciando servidor:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
+```
+
+
+
+
+
+
+---
+
+
 
