@@ -31,21 +31,21 @@ async function downloadResources(inputFile, outputDir, urlBuilder) {
             .then(res => {
               if (res.status === 200) {
                 res.body.pipe(fsSync.createWriteStream(path.join(outputDir, filename)));
-                console.log(`[${idx + 1}/${data.length}] ✓ ${filename}`);
+                console.log(`[${idx + 1}/${data.length}] ${filename}`);
               } else {
-                console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - status: ${res.status}`);
+                console.log(`[${idx + 1}/${data.length}] ${filename} - status: ${res.status}`);
               }
               resolve();
             })
             .catch(err => {
-              console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - ${err.message}`);
+              console.log(`[${idx + 1}/${data.length}] ${filename} - ${err.message}`);
               resolve();
             });
         }, idx * DELAY_MS);
       });
     }
 
-    console.log(`\n✓ Descarga completada`);
+    console.log(`\n Descarga completada`);
 
   } catch (err) {
     console.error('Error:', err);

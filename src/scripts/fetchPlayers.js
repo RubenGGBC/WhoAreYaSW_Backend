@@ -47,7 +47,7 @@ const DELAY_MS = 1000 / REQUESTS_PER_SECOND;
       });
     }
 
-    console.log(`\n✓ Descarga completada: ${successCount} éxito, ${errorCount} errores`);
+    console.log(`\n Descarga completada: ${successCount} éxito, ${errorCount} errores`);
 
   } catch (err) {
     console.error(err);

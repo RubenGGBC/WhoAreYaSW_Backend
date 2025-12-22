@@ -23,9 +23,9 @@ const writepath = path.join(__dirname, '../../public/images/nations/');
         .then(res => {
           if (res.status === 200) {
             res.body.pipe(fsSync.createWriteStream(`${writepath}${cleanElem}.svg`));
-            console.log(`[${idx + 1}] ✓ ${cleanElem}`);
+            console.log(`[${idx + 1}] ${cleanElem}`);
           } else {
-            console.log(`[${idx + 1}] ✗ status: ${res.status} - ${cleanElem}`);
+            console.log(`[${idx + 1}] status: ${res.status} - ${cleanElem}`);
           }
         })
         .catch(err => console.log(err));

@@ -776,8 +776,353 @@ async function startServer() {
 startServer();
 ```
 
+---
 
+## Milestone 3: Gestión de usuarios - Autentificación y Autorización
 
+### ¿Qué hemos hecho?
+
+En este milestone implementamos un sistema completo de autentificación y autorización. Permite que los usuarios se registren, inicien sesión, y acceda a recursos protegidos según su rol.
+
+**Cambios importantes:**
+- Los usuarios se pueden registrar y hacer login/logout
+- Las contraseñas se guardan hasheadas (seguridad)
+- Las sesiones se almacenan en MongoDB (persisten entre reinicios)
+- Hay dos roles: `admin` y `user`
+- El **primer usuario que se registra automáticamente es admin**
+- Tenemos middlewares para proteger rutas (solo usuarios autenticados, solo admins, etc.)
+
+---
+
+### 1. Modelo User (src/models/User.js)
+
+Define cómo se ve un **usuario** en la BD.
+
+```javascript
+const UserSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    minlength: 2
+  },
+  lastName: {
+    type: String,
+    required: true,
+    minlength: 2
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 8
+  },
+  role: {
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user'
+  }
+});
+
+UserSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+UserSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = mongoose.model('User', UserSchema);
+```
+
+**Validaciones:**
+- `name` y `lastName` → Strings obligatorios, mínimo 2 caracteres
+- `email` → Único, validado con regex para que sea un email válido
+- `password` → Mínimo 8 caracteres, se hashea automáticamente antes de guardar
+- `role` → Solo puede ser `'admin'` o `'user'`
+
+Cuando el usuario registra su contraseña "password123", no la guardamos tal cual. En su lugar:
+1. Se genera un "salt" (número aleatorio) - línea `const salt = await bcrypt.genSalt(10)`
+2. Se hashea la contraseña combinada con el salt - línea `await bcrypt.hash(this.password, salt)`
+3. Se guarda el hash en la BD (la contraseña original se pierde)
+
+Cuando el usuario intenta login, usamos `comparePassword()` para comparar la contraseña que envía con el hash guardado. Si coinciden, el login es válido.
+
+De esta manera podemos ocultar las contraseñas de los usuarios en la BD y solo se ve la contraseña hasheada
+
+---
+
+### 2. Controlador de Autentificación (src/controllers/authController.js)
+
+El controlador maneja 4 operaciones:
+
+#### `register(req, res)`
+Crea un nuevo usuario. Verifica que el email no exista y que sea el primero si es admin.
+
+```javascript
+POST /auth/register
+Body: {
+  name: "Juan",
+  lastName: "Pérez",
+  email: "juan@example.com",
+  password: "password123",
+  confirmPassword: "password123"
+}
+```
+
+**Validaciones:**
+1. El email no debe existir
+2. Las dos contraseñas deben coincidir
+3. Se valida nombre, apellido, email, contraseña (en las rutas, ver paso 3)
+
+**Respuesta exitosa (201):**
+```javascript
+{
+  success: true,
+  data: {
+    id: ObjectId,
+    name: "Juan",
+    lastName: "Pérez",
+    email: "juan@example.com",
+    role: "admin" // o "user"
+  },
+  message: "Primer usuario registrado como admin"
+}
+```
+
+#### `login(req, res)`
+Verifica email y contraseña, crea una sesión.
+
+```javascript
+POST /auth/login
+Body: {
+  email: "juan@example.com",
+  password: "password123"
+}
+```
+
+**¿Qué pasa internamente?**
+1. Se busca el usuario por email
+2. Se compara la contraseña con `comparePassword()`
+3. Si es correcta, se crea una sesión en MongoDB
+4. El navegador recibe una cookie `connect.sid` con el ID de la sesión
+
+**Respuesta exitosa (200):**
+```javascript
+{
+  success: true,
+  data: {
+    id: ObjectId,
+    name: "Juan",
+    lastName: "Pérez",
+    email: "juan@example.com",
+    role: "admin"
+  },
+  message: "Sesión iniciada exitosamente"
+}
+```
+
+#### `logout(req, res)`
+Destruye la sesión en MongoDB y borra la cookie.
+
+```javascript
+POST /auth/logout
+```
+
+Requiere estar autenticado (tener sesión activa).
+
+#### `getCurrentUser(req, res)`
+Retorna quién eres si estás logueado.
+
+```javascript
+GET /auth/me
+```
+
+Requiere estar autenticado. Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    userId: ObjectId,
+    role: "admin" // o "user"
+  }
+}
+```
+
+---
+
+### 3. Rutas de Autentificación con Validación (src/routes/authRoutes.js)
+
+Las rutas usan `express-validator` para validar los datos antes de llegar al controlador.
+
+**Rutas públicas:**
+```javascript
+POST /auth/register    // Crear cuenta
+POST /auth/login       // Iniciar sesión
+```
+
+**Rutas protegidas:**
+```javascript
+POST /auth/logout      // Requiere sesión activa
+GET /auth/me           // Requiere sesión activa
+```
+
+**Validaciones en /register:**
+- `name`: Mínimo 2 caracteres
+- `lastName`: Mínimo 2 caracteres
+- `email`: Debe ser un email válido (usando `.isEmail()`)
+- `password`: Mínimo 8 caracteres
+- `confirmPassword`: Debe coincidir exactamente con `password`
+
+**Validaciones en /login:**
+- `email`: Debe ser email válido
+- `password`: Es obligatorio
+
+Si hay errores de validación, se retorna **400**:
+```javascript
+{
+  success: false,
+  error: {
+    code: 'VALIDATION_ERROR',
+    message: 'Datos de entrada inválidos',
+    details: [
+      {
+        value: "juan",
+        msg: "El nombre debe tener al menos 2 caracteres",
+        param: "name",
+        location: "body"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 4. Middlewares de Autentificación (src/middlewares/authMiddleware.js)
+
+Dos middlewares que protegen las rutas:
+
+#### `isAuthenticated`
+Verifica que exista sesión activa.
+
+```javascript
+// Uso en una ruta
+router.post('/logout', isAuthenticated, authController.logout);
+
+// Si no está autenticado, retorna 401:
+{
+  success: false,
+  error: {
+    code: 'NOT_AUTHENTICATED',
+    message: 'Debe iniciar sesión'
+  }
+}
+```
+
+#### `isAdmin`
+Verifica que el rol sea `'admin'`. Se usa junto con `isAuthenticated`.
+
+```javascript
+// Uso: primero autentificarse, luego verificar que es admin
+router.post('/admin/players', isAuthenticated, isAdmin, createPlayer);
+
+// Si no es admin, retorna 403:
+{
+  success: false,
+  error: {
+    code: 'FORBIDDEN',
+    message: 'Acceso solo para administradores'
+  }
+}
+```
+
+---
+
+### 5. Sesiones con MongoStore (src/app.js)
+
+Las sesiones se configuran con MongoStore para que persistan en MongoDB:
+
+```javascript
+const express = require('express');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || '9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617',
+  resave: false,
+  saveUninitialized: true,
+  store: new MongoStore({
+    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya',
+    ttl: 24 * 60 * 60
+  })
+}));
+```
+
+**Ventajas de MongoStore:**
+- Las sesiones se guardan en MongoDB
+- Persisten si reinicia el servidor
+- Funcionan con múltiples servidores
+- El usuario sigue logueado tras un restart
+- Sin MongoStore, las sesiones se pierden al reiniciar
+
+**Variables de entorno necesarias:**
+
+```bash
+MONGO_URI=mongodb://localhost:27017/whoareya
+SESSION_SECRET=9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617
+```
+
+---
+
+### 6. Sistema de Roles
+
+**Dos roles:**
+- `admin` → Acceso a CRUD de jugadores, panel de administración, etc.
+- `user` → Solo lectura de datos públicos
+
+**Regla especial:**
+El primer usuario que se registra automáticamente es `admin`. Los siguientes son `user`.
+
+En el controlador:
+```javascript
+const userCount = await User.countDocuments();
+const role = userCount === 0 ? 'admin' : 'user';
+```
+
+En futuras ampliaciones (Milestone 5) habrá rutas de admin para cambiar roles.
+
+---
+
+### 7. Archivos Creados/Modificados
+
+```
+src/
+├── models/
+│   └── User.js                          (Creado)
+│
+├── controllers/
+│   └── authController.js                (Modificado - con validaciones)
+│
+├── routes/
+│   └── authRoutes.js                    (Modificado - con express-validator)
+│
+├── middlewares/
+│   └── authMiddleware.js                (Creado)
+│
+└── app.js                               (Modificado - session + authRoutes)
+
+package.json                             (Modificado - dependencias)
+```
+
+---
 
 
 
