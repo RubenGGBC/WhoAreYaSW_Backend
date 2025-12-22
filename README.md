@@ -1128,5 +1128,672 @@ package.json                             (Modificado - dependencias)
 
 ---
 
+## Milestone 4: API REST - CRUD de Jugadores
+
+### ¿Qué hemos hecho?
+
+En este milestone implementamos una API REST completa para gestionar jugadores. El backend ahora sirve datos desde la BD en lugar de archivos JSON estáticos.
+
+**Cambios importantes:**
+- 7 endpoints REST para operaciones CRUD
+- Rutas públicas para lectura (GET)
+- Rutas protegidas para escritura (POST, PUT, DELETE) - solo admin
+- Paginación en listados
+- Validación de datos y manejo de errores consistente
+- Endpoints específicos para el juego (solución del día)
+- Separación clara entre controladores (lógica) y rutas (HTTP)
+
+---
+
+### 1. Endpoints de la API
+
+#### Rutas públicas (sin autenticación)
+
+**GET /api/players**
+Obtiene lista paginada de jugadores.
+
+Query parameters:
+- `page` (default: 1) - Número de página
+- `limit` (default: 10) - Jugadores por página
+
+Ejemplo: `GET /api/players?page=1&limit=10`
+
+**GET /api/players/:id**
+Obtiene un jugador específico por su ID de MongoDB.
+
+**GET /api/teams**
+Obtiene lista de todos los equipos.
+
+**GET /api/leagues**
+Obtiene lista de todas las ligas.
+
+**GET /api/game/current**
+Obtiene el número del juego actual basado en la fecha actual.
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    gameNumber: 347,
+    date: "2025-12-22T23:05:42.929Z"
+  }
+}
+```
+
+**GET /api/game/:gameNumber**
+Obtiene información de un juego específico por número.
+
+Ejemplo: `GET /api/game/1`
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    gameNumber: 1,
+    date: "2025-01-10T00:00:00.000Z",
+    hasSolution: true
+  }
+}
+```
+
+**GET /api/solution/:gameNumber**
+Obtiene la solución del día (el jugador del día) para un juego específico.
+
+Ejemplo: `GET /api/solution/1`
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    playerId: 27440826,
+    _id: "694723512c19de3530d59c1e"
+  }
+}
+```
+
+---
+
+#### Rutas protegidas (requieren admin)
+
+**POST /api/players**
+Crea un nuevo jugador. Solo administrador.
+
+**PUT /api/players/:id**
+Actualiza un jugador existente. Solo administrador.
+
+**DELETE /api/players/:id**
+Elimina un jugador. Solo administrador.
+
+---
+
+### 2. Arquitectura: Controllers vs Routes
+
+**Controladores (playerController.js):**
+- Contienen la lógica del negocio
+- Consultan la BD
+- Procesan datos
+- Devuelven respuestas JSON
+
+**Rutas (playerRoutes.js):**
+- Definen las URLs
+- Especifican el método HTTP (GET, POST, etc)
+- Llaman a los controladores
+- Aplican middlewares de autenticación/autorización
+
+Esto nos permite mantener un código más limpio, organizado y escalable.
+
+---
+
+### 3. Detalles de Endpoints CRUD
+
+#### GET /api/players - Listar con paginación
+
+Retorna jugadores con información de paginación:
+
+Respuesta exitosa (200):
+```javascript
+{
+  success: true,
+  data: [
+    {
+      _id: "507f1f77bcf86cd799439011",
+      id: 12345,
+      name: "Lionel Messi",
+      position: "FW",
+      birthDate: "1987-06-24",
+      nationality: "Argentina",
+      teamId: 2030,
+      leagueId: 8,
+      imageUrl: "/images/players/12345.png"
+    },
+    ...
+  ],
+  pagination: {
+    page: 1,
+    limit: 10,
+    total: 2038,
+    pages: 204
+  }
+}
+```
+
+Con 2038 jugadores y limit 10 → 204 páginas totales.
+
+#### GET /api/players/:id - Obtener jugador por ID
+
+Ejemplo: `GET /api/players/507f1f77bcf86cd799439011`
+
+Respuesta exitosa (200):
+```javascript
+{
+  success: true,
+  data: {
+    _id: "507f1f77bcf86cd799439011",
+    id: 12345,
+    name: "Lionel Messi",
+    position: "FW",
+    birthDate: "1987-06-24T00:00:00.000Z",
+    nationality: "Argentina",
+    teamId: 2030,
+    leagueId: 8,
+    number: 10,
+    imageUrl: "/images/players/12345.png"
+  }
+}
+```
+
+Si no existe (404):
+```javascript
+{
+  success: false,
+  error: {
+    code: 'PLAYER_NOT_FOUND',
+    message: 'Jugador no encontrado'
+  }
+}
+```
+
+#### GET /api/teams - Listar todos los equipos
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: [
+    {
+      _id: "507f1f77bcf86cd799439012",
+      id: 2030,
+      name: "FC Barcelona",
+      leagueId: 8,
+      logoUrl: "/images/teams/2030.png",
+      country: "Spain",
+      stadium: "Camp Nou"
+    },
+    ...
+  ]
+}
+```
+
+#### GET /api/leagues - Listar todas las ligas
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: [
+    {
+      _id: "507f1f77bcf86cd799439013",
+      id: 8,
+      name: "La Liga",
+      code: "es1",
+      country: "Spain",
+      flagUrl: "/images/leagues/es1.png"
+    },
+    ...
+  ]
+}
+```
+
+#### POST /api/players - Crear jugador (Admin)
+
+Header: Cookie con sesión de admin
+
+Body:
+```javascript
+{
+  id: 99999,
+  name: "Cristiano Ronaldo",
+  position: "FW",
+  birthDate: "1985-02-05",
+  nationality: "Portugal",
+  teamId: 236,
+  leagueId: 8,
+  number: 7,
+  imageUrl: "/images/players/99999.png"
+}
+```
+
+Respuesta exitosa (201):
+```javascript
+{
+  success: true,
+  data: {
+    _id: "507f1f77bcf86cd799439014",
+    id: 99999,
+    name: "Cristiano Ronaldo",
+    position: "FW",
+    ...
+  },
+  message: "Jugador creado exitosamente"
+}
+```
+
+Si ID duplicado (400):
+```javascript
+{
+  success: false,
+  error: {
+    code: 'DUPLICATE_ID',
+    message: 'Ya existe un jugador con ese ID'
+  }
+}
+```
+
+Si no es admin (403):
+```javascript
+{
+  success: false,
+  error: {
+    code: 'FORBIDDEN',
+    message: 'Acceso solo para administradores'
+  }
+}
+```
+
+#### PUT /api/players/:id - Actualizar jugador (Admin)
+
+Header: Cookie con sesión de admin
+
+Body (campos opcionales):
+```javascript
+{
+  name: "Cristiano Ronaldo",
+  number: 7,
+  position: "FW"
+}
+```
+
+Respuesta exitosa (200):
+```javascript
+{
+  success: true,
+  data: {
+    _id: "507f1f77bcf86cd799439014",
+    id: 99999,
+    name: "Cristiano Ronaldo",
+    number: 7,
+    ...
+  },
+  message: "Jugador actualizado exitosamente"
+}
+```
+
+#### DELETE /api/players/:id - Eliminar jugador (Admin)
+
+Header: Cookie con sesión de admin
+
+Respuesta exitosa (200):
+```javascript
+{
+  success: true,
+  message: 'Jugador eliminado exitosamente'
+}
+```
+
+---
+
+### 4. Endpoints del Juego
+
+#### GET /api/game/current - Número de juego actual
+
+Calcula automáticamente basándose en la fecha actual y SOLUTION_START_DATE.
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    gameNumber: 347,
+    date: "2025-12-22T23:05:42.929Z"
+  }
+}
+```
+
+La fórmula es:
+```javascript
+const diffDays = Math.floor((now - SOLUTION_START_DATE) / (1000 * 60 * 60 * 24));
+const gameNumber = diffDays + 1;
+```
+
+#### GET /api/game/:gameNumber - Información del juego
+
+Ejemplo: `GET /api/game/100`
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    gameNumber: 100,
+    date: "2025-04-19T00:00:00Z",
+    hasSolution: true
+  }
+}
+```
+
+#### GET /api/solution/:gameNumber - Solución del día
+
+Obtiene el jugador que es la solución para un día específico.
+
+Ejemplo: `GET /api/solution/100`
+
+Respuesta:
+```javascript
+{
+  success: true,
+  data: {
+    playerId: 185023,
+    _id: "694723512c19de3530d5a1f5"
+  }
+}
+```
+
+---
+
+### 5. Paginación en detalle
+
+La paginación se implementa así:
+
+```javascript
+const page = parseInt(req.query.page) || 1;      // Página actual (default 1)
+const limit = parseInt(req.query.limit) || 10;   // Items por página (default 10)
+const skip = (page - 1) * limit;                 // Cuántos documentos saltar
+
+const players = await Player.find()
+  .skip(skip)
+  .limit(limit)
+  .lean();
+```
+
+**Ejemplos:**
+- `GET /api/players?page=1&limit=10` → Jugadores 1-10
+- `GET /api/players?page=2&limit=10` → Jugadores 11-20
+- `GET /api/players?page=3&limit=20` → Jugadores 41-60
+
+---
+
+### 6. Validaciones
+
+**En creación de jugador:**
+- ID debe ser único
+- Position debe ser: DF, MF, FW o GK
+- Name es obligatorio
+- Requiere autenticación + rol admin
+
+**En actualización:**
+- Si no existe el jugador → 404
+- Solo se actualizan campos que vienen en el body
+- Requiere autenticación + rol admin
+
+**En eliminación:**
+- Si no existe → 404
+- Requiere autenticación + rol admin
+
+**En GET:**
+- Solo validación de formato de ID (MongoDB ObjectId)
+- Sin autenticación requerida
+
+---
+
+### 7. Integración con Frontend (loaders.js)
+
+El archivo `public/js/loaders.js` ha sido actualizado para consumir la API:
+
+```javascript
+export { fetchJSON, fetchPlayer, fetchSolution };
+
+const API_URL = 'http://localhost:3000/api';
+
+async function fetchJSON(what) {
+    let endpoint;
+
+    if (what === 'fullplayers25') {
+        endpoint = `${API_URL}/players`;
+    } else if (what === 'solution25') {
+        // Obtener el número del juego actual
+        const gameResponse = await fetch(`${API_URL}/game/current`);
+        const gameData = await gameResponse.json();
+        const gameNumber = gameData.data.gameNumber;
+        endpoint = `${API_URL}/solution/${gameNumber}`;
+    }
+
+    const response = await fetch(endpoint);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+}
+
+async function fetchPlayer(playerId) {
+    const response = await fetch(`${API_URL}/players/${playerId}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+}
+
+async function fetchSolution(gameNumber) {
+    const response = await fetch(`${API_URL}/solution/${gameNumber}`);
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+}
+```
+
+**Flujo de uso:**
+1. Frontend llama `fetchJSON('fullplayers25')` → Backend devueklve array de jugadores desde BD
+2. Frontend llama `fetchJSON('solution25')` → Obtiene gameNumber actual → Obtiene solución del día
+3. Frontend llama `fetchPlayer(playerId)` → Obtiene detalles de un jugador para comparar
+
+---
+
+### 8. Testing con curl
+
+```bash
+# Listar jugadores (página 1, 10 items)
+curl http://localhost:3000/api/players?page=1&limit=10
+
+# Obtener un jugador por ID
+curl http://localhost:3000/api/players/507f1f77bcf86cd799439011
+
+# Listar equipos
+curl http://localhost:3000/api/teams
+
+# Listar ligas
+curl http://localhost:3000/api/leagues
+
+# Obtener número de juego actual
+curl http://localhost:3000/api/game/current
+
+# Obtener información del juego 1
+curl http://localhost:3000/api/game/1
+
+# Obtener solución del día 1
+curl http://localhost:3000/api/solution/1
+
+# Crear jugador (requiere estar logeado como admin)
+curl -X POST http://localhost:3000/api/players \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "id": 99999,
+    "name": "Test Player",
+    "position": "FW",
+    "birthDate": "1990-01-01",
+    "nationality": "Spain",
+    "teamId": 2030,
+    "leagueId": 8
+  }'
+
+# Actualizar jugador
+curl -X PUT http://localhost:3000/api/players/507f1f77bcf86cd799439011 \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "name": "Updated Name",
+    "number": 10
+  }'
+
+# Eliminar jugador
+curl -X DELETE http://localhost:3000/api/players/507f1f77bcf86cd799439011 \
+  -b cookies.txt
+```
+
+---
+
+### 9. Consideraciones de implementación
+
+**Por qué GET /players no requiere autenticación:**
+- Las rutas del juego no requieren login
+- El frontend accede libremente a GET /players, GET /players/:id y GET /solution/:gameNumber
+- Sin estas rutas públicas, el juego no funcionaría
+
+**POST/PUT/DELETE requieren admin:**
+- Solo los administradores pueden modificar datos
+- El juego es solo lectura para usuarios normales
+- Las operaciones de escritura están protegidas
+
+**Variables de entorno necesarias:**
+```bash
+MONGO_URI=mongodb://localhost:27017/whoareya
+SESSION_SECRET=9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617
+SOLUTION_START_DATE=2025-01-10
+```
+
+---
+
+### 10. Modelo Solution
+
+Define cómo se ve una **solución** en la BD (el jugador del día).
+
+```javascript
+const SolutionSchema = new mongoose.Schema({
+  gameNumber: {
+    type: Number,
+    required: true,
+    unique: true
+  },
+  playerId: {
+    type: Number,
+    required: true
+  },
+  date: {
+    type: Date,
+    required: true
+  }
+});
+```
+
+**Campos:**
+- `gameNumber` → Número único del juego (1, 2, 3, ...)
+- `playerId` → ID del jugador que es la solución
+- `date` → Fecha correspondiente al juego
+
+---
+
+### 3. Seeding de Soluciones
+
+Se creó el script `seedSolutions.js` que:
+1. Crea una solución para cada jugador en la BD
+2. Asigna un número de juego (gameNumber)
+3. Calcula automáticamente la fecha basada en SOLUTION_START_DATE
+4. Los jugadores se asignan secuencialmente (día 1 = jugador 1, día 2 = jugador 2, etc.)
+
+**Ejecutar:**
+```bash
+node src/db/seeders/seedPlayers.js    # Primero los jugadores
+node src/db/seeders/seedSolutions.js  # Luego las soluciones
+```
+
+O en un comando:
+```bash
+node src/db/seeders/seedPlayers.js && node src/db/seeders/seedSolutions.js
+```
+
+---
+
+### 11. Archivos Creados/Modificados
+
+```
+src/
+├── controllers/
+│   ├── playerController.js        (Completado - 7 funciones CRUD)
+│   │   ├── getPlayers()           - Listar jugadores con paginación
+│   │   ├── getPlayersById()       - Obtener jugador por ID
+│   │   ├── createPlayer()         - Crear nuevo jugador (admin)
+│   │   ├── updatePlayer()         - Actualizar jugador (admin)
+│   │   ├── deletePlayer()         - Eliminar jugador (admin)
+│   │   ├── getTeams()             - Listar todos los equipos
+│   │   └── getLeagues()           - Listar todas las ligas
+│   │
+│   └── gameController.js          (Creado - endpoints de solución)
+│       ├── getCurrentGameNumber()  - Obtener número de juego actual
+│       ├── getSolution()           - Obtener solución del día
+│       └── getGameInfo()           - Obtener información del juego
+│
+├── routes/
+│   ├── playerRoutes.js            (Completado)
+│   │   ├── GET /players           - Público
+│   │   ├── GET /players/:id       - Público
+│   │   ├── GET /teams             - Público
+│   │   ├── GET /leagues           - Público
+│   │   ├── POST /players          - Admin
+│   │   ├── PUT /players/:id       - Admin
+│   │   └── DELETE /players/:id    - Admin
+│   │
+│   └── gameRoutes.js              (Creado)
+│       ├── GET /game/current      - Público
+│       ├── GET /game/:gameNumber  - Público
+│       └── GET /solution/:gameNumber - Público
+│
+├── models/
+│   └── Solution.js                (Completado)
+│       └── SolutionSchema         - Modelo para soluciones del día
+│
+├── db/seeders/
+│   └── seedSolutions.js           (Creado)
+│       └── seedSolutions()        - Puebla BD con 2038 soluciones
+│
+└── app.js                         (Modificado)
+    ├── Importa gameRoutes
+    ├── Registra playerRoutes en /api
+    └── Registra gameRoutes en /api
+
+public/
+└── js/
+    └── loaders.js                 (Modificado)
+        ├── fetchJSON()            - Ahora usa API en lugar de archivos
+        ├── fetchPlayer()          - Nueva función para obtener jugador
+        └── fetchSolution()        - Nueva función para obtener solución
+
+package.json                       (Sin cambios)
+```
+
+---
+
 
 

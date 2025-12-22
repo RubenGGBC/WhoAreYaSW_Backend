@@ -1,6 +1,6 @@
 const express = require('express');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const MongoStore = require('connect-mongo').default;
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
@@ -23,8 +23,8 @@ app.use(session({
 app.use('/auth', authRoutes);
 
 // Rutas API (las crearemos en Milestone 4)
-// app.use('/api', require('./routes/playerRoutes'));
-// app.use('/api', require('./routes/gameRoutes'));
+app.use('/api', require('./routes/playerRoutes'));
+app.use('/api', require('./routes/gameRoutes'));
 // app.use('/api', require('./routes/statsRoutes'));
 
 // Manejo de errores
