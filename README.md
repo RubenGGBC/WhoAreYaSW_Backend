@@ -1135,12 +1135,13 @@ package.json                             (Modificado - dependencias)
 En este milestone implementamos una API REST completa para gestionar jugadores. El backend ahora sirve datos desde la BD en lugar de archivos JSON estáticos.
 
 **Cambios importantes:**
-- 7 endpoints REST para operaciones CRUD
-- Rutas públicas para lectura (GET)
-- Rutas protegidas para escritura (POST, PUT, DELETE) - solo admin
-- Paginación en listados
-- Validación de datos y manejo de errores consistente
-- Endpoints específicos para el juego (solución del día)
+- 7 endpoints REST para operaciones CRUD (getPlayers, getPlayersById, createPlayer, updatePlayer, deletePlayer, getTeams, getLeagues)
+- Rutas públicas para lectura (GET) sin autenticación requerida
+- Rutas protegidas para escritura (POST, PUT, DELETE) - solo rol admin
+- Paginación en listados de jugadores
+- Validaciones manuales con ifs en los métodos del controlador
+- Manejo de errores consistente con códigos de error específicos
+- Endpoints específicos para el juego (número actual, información, solución del día)
 - Separación clara entre controladores (lógica) y rutas (HTTP)
 
 ---
@@ -1535,30 +1536,100 @@ const players = await Player.find()
 
 ---
 
-### 6. Validaciones
+### 6. Validaciones con ifs en el Controlador
 
-**En creación de jugador:**
-- ID debe ser único
-- Position debe ser: DF, MF, FW o GK
-- Name es obligatorio
+Las validaciones se implementan directamente en los métodos del controlador usando ifs, en lugar de middleware externo. Esto mantiene la lógica de validación cerca de la lógica de negocio.
+
+#### En createPlayer() y updatePlayer()
+
+Ambos métodos validan los datos de entrada de la siguiente manera:
+
+```javascript
+const errors = [];
+
+// Validar id
+if (!id) {
+    errors.push('El ID del jugador es requerido');
+} else if (typeof id !== 'number' && isNaN(id)) {
+    errors.push('El ID debe ser un número');
+}
+
+// Validar nombre
+if (!name) {
+    errors.push('El nombre es requerido');
+} else if (name.length < 2) {
+    errors.push('El nombre debe tener al menos 2 caracteres');
+}
+
+// Validar posición
+if (!position) {
+    errors.push('La posición es requerida');
+} else if (!['DF', 'MF', 'FW', 'GK'].includes(position)) {
+    errors.push('Posición inválida. Debe ser DF, MF, FW o GK');
+}
+
+// Validar campos opcionales
+if (number && isNaN(number)) {
+    errors.push('El número debe ser numérico');
+}
+
+if (birthDate && isNaN(Date.parse(birthDate))) {
+    errors.push('Formato de fecha inválido');
+}
+
+if (teamId && isNaN(teamId)) {
+    errors.push('El ID del equipo debe ser un número');
+}
+
+if (leagueId && isNaN(leagueId)) {
+    errors.push('El ID de la liga debe ser un número');
+}
+
+// Si hay errores, se retornan todos juntos
+if (errors.length > 0) {
+    return res.status(400).json({
+        success: false,
+        error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Datos inválidos',
+            details: errors
+        }
+    });
+}
+```
+
+**Ventajas de este enfoque:**
+- Código más directo y fácil de leer
+- No requiere dependencias externas para validación
+- Las validaciones están contextualizadas con el resto de la lógica
+- Se pueden acumular múltiples errores y retornarlos juntos
+
+#### Validaciones en cada operación
+
+**En createPlayer:**
+- ID es requerido y debe ser numérico
+- Name es requerido y mínimo 2 caracteres
+- Position es requerida y debe ser DF/MF/FW/GK
+- ID debe ser único en la BD
 - Requiere autenticación + rol admin
 
-**En actualización:**
-- Si no existe el jugador → 404
-- Solo se actualizan campos que vienen en el body
+**En updatePlayer:**
+- Mismas validaciones que createPlayer
+- Si el jugador no existe → 404
 - Requiere autenticación + rol admin
 
-**En eliminación:**
-- Si no existe → 404
+**En deletePlayer:**
+- Si el jugador no existe → 404
 - Requiere autenticación + rol admin
 
-**En GET:**
-- Solo validación de formato de ID (MongoDB ObjectId)
+**En GET (/players, /players/:id, /teams, /leagues):**
+- Sin validaciones requeridas
 - Sin autenticación requerida
+- Acceso público
 
 ---
 
-### 7. Integración con Frontend (loaders.js)
+### 8. Integración con Frontend (loaders.js)
 
 El archivo `public/js/loaders.js` ha sido actualizado para consumir la API:
 
@@ -1611,7 +1682,7 @@ async function fetchSolution(gameNumber) {
 
 ---
 
-### 8. Testing con curl
+### 9. Testing con curl
 
 ```bash
 # Listar jugadores (página 1, 10 items)
@@ -1665,7 +1736,7 @@ curl -X DELETE http://localhost:3000/api/players/507f1f77bcf86cd799439011 \
 
 ---
 
-### 9. Consideraciones de implementación
+### 10. Consideraciones de implementación
 
 **Por qué GET /players no requiere autenticación:**
 - Las rutas del juego no requieren login
@@ -1686,7 +1757,7 @@ SOLUTION_START_DATE=2025-01-10
 
 ---
 
-### 10. Modelo Solution
+### 11. Modelo Solution
 
 Define cómo se ve una **solución** en la BD (el jugador del día).
 
@@ -1715,7 +1786,7 @@ const SolutionSchema = new mongoose.Schema({
 
 ---
 
-### 3. Seeding de Soluciones
+### 12. Seeding de Soluciones
 
 Se creó el script `seedSolutions.js` que:
 1. Crea una solución para cada jugador en la BD
@@ -1736,12 +1807,12 @@ node src/db/seeders/seedPlayers.js && node src/db/seeders/seedSolutions.js
 
 ---
 
-### 11. Archivos Creados/Modificados
+### 13. Archivos Creados/Modificados
 
 ```
 src/
 ├── controllers/
-│   ├── playerController.js        (Completado - 7 funciones CRUD)
+│   ├── playerController.js        (Completado - 7 funciones CRUD con validaciones ifs)
 │   │   ├── getPlayers()           - Listar jugadores con paginación
 │   │   ├── getPlayersById()       - Obtener jugador por ID
 │   │   ├── createPlayer()         - Crear nuevo jugador (admin)
@@ -1756,13 +1827,13 @@ src/
 │       └── getGameInfo()           - Obtener información del juego
 │
 ├── routes/
-│   ├── playerRoutes.js            (Completado)
+│   ├── playerRoutes.js            (Completado - sin middlewares de validación)
 │   │   ├── GET /players           - Público
 │   │   ├── GET /players/:id       - Público
 │   │   ├── GET /teams             - Público
 │   │   ├── GET /leagues           - Público
-│   │   ├── POST /players          - Admin
-│   │   ├── PUT /players/:id       - Admin
+│   │   ├── POST /players          - Admin (validación en controlador)
+│   │   ├── PUT /players/:id       - Admin (validación en controlador)
 │   │   └── DELETE /players/:id    - Admin
 │   │
 │   └── gameRoutes.js              (Creado)
@@ -1795,5 +1866,28 @@ package.json                       (Sin cambios)
 
 ---
 
+
+**Métodos del controlador playerController.js:**
+
+- `getPlayers()` - Obtiene lista paginada de todos los jugadores
+- `getPlayersById()` - Obtiene jugador específico por ID
+- `createPlayer()` - Crea nuevo jugador (requiere admin, valida datos)
+- `updatePlayer()` - Actualiza jugador (requiere admin, valida datos)
+- `deletePlayer()` - Elimina jugador (requiere admin)
+- `getTeams()` - Obtiene lista de todos los equipos
+- `getLeagues()` - Obtiene lista de todas las ligas
+
+
+1. GET /api/players?page=1&limit=10 → Devuelve jugadores paginados con metadata
+2. GET /api/players/:id → Devuelve jugador específico o 404
+3. POST /api/players → Valida datos, verifica admin, crea jugador o retorna errores
+4. PUT /api/players/:id → Valida datos, verifica admin, actualiza jugador
+5. DELETE /api/players/:id → Verifica admin, elimina jugador
+6. GET /api/teams → Devuelve lista completa de equipos
+7. GET /api/leagues → Devuelve lista completa de ligas
+8. GET /api/game/current → Devuelve número de juego actual basado en fecha
+9. GET /api/solution/:gameNumber → Devuelve jugador solución del día
+
+---
 
 
