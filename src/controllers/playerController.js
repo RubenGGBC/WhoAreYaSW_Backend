@@ -5,16 +5,46 @@ const League = require('../models/League');
 // Obtiene lista paginada de todos los jugadores
 exports.getPlayers = async (req, res) => {
     try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const pageRaw = parseInt(req.query.page);
+        const limitRaw = parseInt(req.query.limit);
+        const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+        const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : 10;
         const skip = (page - 1) * limit;
 
-        const players = await Player.find()
+        // Sistema de filtros (con ayuda de Copilot):
+        const filter = {};
+
+        // Búsqueda por nombre
+        if (req.query.search) {
+            const q = String(req.query.search).trim();
+            if (q) {
+                filter.name = { $regex: q, $options: 'i' };
+            }
+        }
+
+        // Filtro por liga
+        const leagueParam = req.query.league ?? req.query.leagueId;
+        if (leagueParam !== undefined && leagueParam !== null && String(leagueParam).trim() !== '') {
+            const leagueId = Number(leagueParam);
+            if (!Number.isNaN(leagueId)) {
+                filter.leagueId = leagueId;
+            }
+        }
+
+        // Filtro por nacionalidad
+        if (req.query.nationality) {
+            const nat = String(req.query.nationality).trim();
+            if (nat) {
+                filter.nationality = { $regex: `^${escapeRegex(nat)}$`, $options: 'i' };
+            }
+        }
+
+        const players = await Player.find(filter)
             .skip(skip)
             .limit(limit)
             .sort({ id: 1 });
 
-        const total = await Player.countDocuments();
+        const total = await Player.countDocuments(filter);
         const pages = Math.ceil(total / limit);
 
         res.status(200).json({
@@ -38,6 +68,11 @@ exports.getPlayers = async (req, res) => {
         });
     }
 };
+
+//Para el sistema de filtros, escapar caracteres especiales en regex (con ayuda de Copilot)
+function escapeRegex(input) {
+    return String(input).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 // Obtiene un jugador específico por ID
 exports.getPlayersById = async (req, res) => {

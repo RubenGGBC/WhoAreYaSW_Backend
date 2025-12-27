@@ -4,23 +4,39 @@ const API_URL = 'http://localhost:3000/api';
 
 async function fetchJSON(what) {
     // Ahora llama al backend en lugar de archivos estáticos
-    let endpoint;
-
     if (what === 'fullplayers25') {
-        endpoint = `${API_URL}/players`;
-    } else if (what === 'solution25') {
-        // Obtener el número del juego actual
-        const gameResponse = await fetch(`${API_URL}/game/current`);
-        const gameData = await gameResponse.json();
-        const gameNumber = gameData.data.gameNumber;
-        endpoint = `${API_URL}/solution/${gameNumber}`;
-    }
+        const response = await fetch(`${API_URL}/players?limit=10000`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const jsonData = await response.json();
+        let players = jsonData.data || jsonData;
 
-    const response = await fetch(endpoint);
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Normalizar los datos: convertir birthDate a birthdate si existe
+        players = players.map(player => {
+            if (player.birthDate && !player.birthdate) {
+                // Convertir birthDate a birthdate en formato YYYY-MM-DD
+                const date = new Date(player.birthDate);
+                player.birthdate = date.toISOString().split('T')[0];
+                delete player.birthDate;
+            }
+            return player;
+        });
+
+        return players;
+
+    } else if (what === 'solution25') {
+        try {
+            const response = await fetch('/json/solution25.json');
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (e) {
+            console.log('No se pudo cargar solution25.json, usando backend');
+        }
+
+        return [];
     }
-    return await response.json();
 }
 
 async function fetchPlayer(playerId) {

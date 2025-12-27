@@ -4,6 +4,10 @@ const { body, validationResult } = require('express-validator');
 const authController = require('../controllers/authController');
 const { isAuthenticated } = require('../middlewares/authMiddleware');
 
+// Rutas para renderizar vistas (GET) - DIRECTAS
+router.get('/login', authController.getLoginView);
+router.get('/register', authController.getRegisterView);
+
 // Middleware para manejar errores de validación
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
@@ -49,6 +53,7 @@ router.post('/login',
 
 // Rutas protegidas (requieren autenticación)
 router.post('/logout', isAuthenticated, authController.logout);
-router.get("/me", isAuthenticated, authController.getCurrentUser);
+router.get('/current-user', authController.getCurrentUser);
+router.get('/me', isAuthenticated, authController.getCurrentUser);
 
 module.exports = router;

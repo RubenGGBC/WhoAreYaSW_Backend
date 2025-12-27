@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Who Are Ya?</title>
+    <link rel="stylesheet" href="/auth/css/auth.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Iniciar Sesión</h1>
+
+            <% if (error) { %>
+                <div class="auth-alert">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form id="loginForm" class="auth-form">
+                <div class="auth-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required
+                           class="auth-input"
+                           placeholder="tu@email.com"
+                           autocomplete="email">
+                </div>
+
+                <div class="auth-field">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required
+                           class="auth-input"
+                           placeholder="Tu contraseña"
+                           autocomplete="current-password">
+                </div>
+
+                <button type="submit" id="submitBtn" class="auth-btn">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <p class="auth-links">
+                ¿No tienes cuenta? <a href="/register">Regístrate</a>
+            </p>
+
+            <a href="/" class="auth-back">
+                ← Volver al juego
+            </a>
+        </div>
+    </div>
+
+    <script src="/auth/js/login.js" defer></script>
+</body>
+</html>

@@ -1,9 +1,25 @@
 const User = require('../models/User');
 
+// GET - Renderizar vista de registro
+exports.getRegisterView = (req, res) => {
+    res.render('auth/register', {
+        title: 'Registro',
+        error: null
+    });
+};
+
+// GET - Renderizar vista de login
+exports.getLoginView = (req, res) => {
+    res.render('auth/login', {
+        title: 'Iniciar Sesión',
+        error: null
+    });
+};
+
 exports.register = async (req, res) => {
     try {
         const { name, lastName, email, password, confirmPassword } = req.body;
-        
+
         // Validar que las contraseñas coincidan
         if (password !== confirmPassword) {
             return res.status(400).json({
@@ -133,7 +149,7 @@ exports.logout = async (req, res) => {
             }
         });
     }
-}
+};
 exports.getCurrentUser = (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({
