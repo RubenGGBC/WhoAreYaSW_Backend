@@ -57,22 +57,22 @@ Este repositorio contiene el backend del proyecto WhoAreYa, desarrollado con Nod
 ```javascript
 // src/config/index.js
 module.exports = {
-  // Servidor
-  port: process.env.PORT || 3000,
-  nodeEnv: process.env.NODE_ENV || 'development',
-  
-  // Base de datos
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya',
-  
-  // Sesiones
-  sessionSecret: process.env.SESSION_SECRET || 'your-secret-key-here',
-  sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000
-  
-  // CORS
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  
-  // Juego
-  solutionStartDate: process.env.SOLUTION_START_DATE || '2025-01-10',
+    // Servidor
+    port: process.env.PORT || 3000,
+    nodeEnv: process.env.NODE_ENV || 'development',
+
+    // Base de datos
+    mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya',
+
+    // Sesiones
+    sessionSecret: process.env.SESSION_SECRET || 'your-secret-key-here',
+    sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000
+
+    // CORS
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+
+    // Juego
+    solutionStartDate: process.env.SOLUTION_START_DATE || '2025-01-10',
 };
 ```
 
@@ -261,28 +261,28 @@ const fs = require('fs').promises;      // Usamos la versión con promesas
 const fsSync = require('fs');           // También necesitamos la versión sync para streams
 
 (async () => {
-  // Creamos la carpeta si no existe
-  await fs.mkdir(writepath, { recursive: true });
-  
-  // Leemos el archivo con los nombres de las ligas
-  const content = await fs.readFile(path.join(__dirname, '../../leagues.txt'), 'utf8');
-  const data = content.split('\n');     // Separamos por líneas
-  
-  data.forEach((elem, idx) => {
-    const url = `https://playfootball.games/media/competitions/${elem}.png`;
-    
-    fetch(url)
-      .then(res => {
-        if (res.status === 200) {
-          // Aquí usamos streams: los datos van directamente al archivo
-          // sin cargar toda la imagen en memoria
-          res.body.pipe(fsSync.createWriteStream(`${writepath}${elem}.png`));
-        } else {
-          console.log(`No encontrado: ${elem}`);
-        }
-      })
-      .catch(err => console.log(err));
-  });
+    // Creamos la carpeta si no existe
+    await fs.mkdir(writepath, { recursive: true });
+
+    // Leemos el archivo con los nombres de las ligas
+    const content = await fs.readFile(path.join(__dirname, '../../leagues.txt'), 'utf8');
+    const data = content.split('\n');     // Separamos por líneas
+
+    data.forEach((elem, idx) => {
+        const url = `https://playfootball.games/media/competitions/${elem}.png`;
+
+        fetch(url)
+            .then(res => {
+                if (res.status === 200) {
+                    // Aquí usamos streams: los datos van directamente al archivo
+                    // sin cargar toda la imagen en memoria
+                    res.body.pipe(fsSync.createWriteStream(`${writepath}${elem}.png`));
+                } else {
+                    console.log(`No encontrado: ${elem}`);
+                }
+            })
+            .catch(err => console.log(err));
+    });
 })();
 ```
 
@@ -300,57 +300,57 @@ Este es casi igual que el anterior, pero tiene un detalle importante: algunos pa
 
 ```javascript
 data.forEach((elem, idx) => {
-  const cleanElem = elem.trim();        // Quitamos espacios al principio/final
-  if (!cleanElem) return;               // Ignoramos líneas vacías
-  
-  // Esto convierte "Bosnia and Herzegovina" en "Bosnia%20and%20Herzegovina"
-  const encodedNation = encodeURIComponent(cleanElem);
-  const url = `https://playfootball.games/media/nations/${encodedNation}.svg`;
-  
-  fetch(url)
-    .then(res => {
-      if (res.status === 200) {
-        res.body.pipe(fsSync.createWriteStream(`${writepath}${cleanElem}.svg`));
-        console.log(`[${idx + 1}]${cleanElem}`);
-      } else {
-        console.log(`[${idx + 1}]${cleanElem} - no encontrada`);
-      }
-    })
-    .catch(err => console.log(err));
+    const cleanElem = elem.trim();        // Quitamos espacios al principio/final
+    if (!cleanElem) return;               // Ignoramos líneas vacías
+
+    // Esto convierte "Bosnia and Herzegovina" en "Bosnia%20and%20Herzegovina"
+    const encodedNation = encodeURIComponent(cleanElem);
+    const url = `https://playfootball.games/media/nations/${encodedNation}.svg`;
+
+    fetch(url)
+        .then(res => {
+            if (res.status === 200) {
+                res.body.pipe(fsSync.createWriteStream(`${writepath}${cleanElem}.svg`));
+                console.log(`[${idx + 1}]${cleanElem}`);
+            } else {
+                console.log(`[${idx + 1}]${cleanElem} - no encontrada`);
+            }
+        })
+        .catch(err => console.log(err));
 });
 ```
 
 **¿Qué hace `encodeURIComponent`?** Convierte caracteres especiales (espacios, acentos, etc.) en códigos que se pueden usar en URLs. Los espacios se convierten en `%20`, por ejemplo.
 
-**Resultado:** 102 de 103 banderas descargadas (había una línea vacía que ignoramos) 
+**Resultado:** 102 de 103 banderas descargadas (había una línea vacía que ignoramos)
 
 ---
 
 ### 3. Descargando escudos de equipos (fetchTeams.js)
 
-Aquí viene la primera cosa rara: la URL para descargar un escudo no es simplemente el ID del equipo. Hay que hacer un cálculo matemático primero 
+Aquí viene la primera cosa rara: la URL para descargar un escudo no es simplemente el ID del equipo. Hay que hacer un cálculo matemático primero
 
 ```javascript
 data.forEach((elem, idx) => {
-  const teamId = elem.trim();
-  if (!teamId) return;
-  
-  // Módulo 32
-  const directory = teamId % 32;
-  
-  // Si teamId es 33, directory será 1
-  // La URL queda: .../teams/1/33.png
-  const url = `https://cdn.sportmonks.com/images/soccer/teams/${directory}/${teamId}.png`;
-  
-  fetch(url)
-    .then(res => {
-      if (res.status === 200) {
-        res.body.pipe(fsSync.createWriteStream(`${writepath}${teamId}.png`));
-      } else {
-        console.log(`Equipo ${teamId} no encontrado`);
-      }
-    })
-    .catch(err => console.log(err));
+    const teamId = elem.trim();
+    if (!teamId) return;
+
+    // Módulo 32
+    const directory = teamId % 32;
+
+    // Si teamId es 33, directory será 1
+    // La URL queda: .../teams/1/33.png
+    const url = `https://cdn.sportmonks.com/images/soccer/teams/${directory}/${teamId}.png`;
+
+    fetch(url)
+        .then(res => {
+            if (res.status === 200) {
+                res.body.pipe(fsSync.createWriteStream(`${writepath}${teamId}.png`));
+            } else {
+                console.log(`Equipo ${teamId} no encontrado`);
+            }
+        })
+        .catch(err => console.log(err));
 });
 ```
 
@@ -376,47 +376,47 @@ const REQUESTS_PER_SECOND = 10;
 const DELAY_MS = 1000 / REQUESTS_PER_SECOND;  // 100ms entre cada petición
 
 (async () => {
-  await fs.mkdir(writepath, { recursive: true });
-  
-  const content = await fs.readFile(path.join(__dirname, '../../public/json/fullplayers25.json'), 'utf8');
-  const players = JSON.parse(content);
-  
-  console.log(`Descargando ${players.length} imágenes de jugadores con throttling...\n`);
-  
-  let successCount = 0;
-  let errorCount = 0;
-  
-  for (let idx = 0; idx < players.length; idx++) {
-    const player = players[idx];
-    const playerId = player.id;
-    const directory = playerId % 32;  // Mismo truco que con los equipos
-    const url = `https://playfootball.games/media/players/${directory}/${playerId}.png`;
-    
-    // Cada petición espera idx * 100ms
-    // La 0 espera 0ms, la 1 espera 100ms, la 2 espera 200ms...
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        fetch(url)
-          .then(res => {
-            if (res.status === 200) {
-              res.body.pipe(fsSync.createWriteStream(`${writepath}${playerId}.png`));
-              successCount++;
-            } else {
-              errorCount++;
-            }
-            console.log(`[${idx + 1}/${players.length}] ${playerId}`);
-            resolve();
-          })
-          .catch(err => {
-            console.log(`Error: ${playerId} - ${err.message}`);
-            errorCount++;
-            resolve();
-          });
-      }, idx * DELAY_MS);
-    });
-  }
-  
-  console.log(`\n✓ Descarga completada: ${successCount} éxito, ${errorCount} errores`);
+    await fs.mkdir(writepath, { recursive: true });
+
+    const content = await fs.readFile(path.join(__dirname, '../../public/json/fullplayers25.json'), 'utf8');
+    const players = JSON.parse(content);
+
+    console.log(`Descargando ${players.length} imágenes de jugadores con throttling...\n`);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let idx = 0; idx < players.length; idx++) {
+        const player = players[idx];
+        const playerId = player.id;
+        const directory = playerId % 32;  // Mismo truco que con los equipos
+        const url = `https://playfootball.games/media/players/${directory}/${playerId}.png`;
+
+        // Cada petición espera idx * 100ms
+        // La 0 espera 0ms, la 1 espera 100ms, la 2 espera 200ms...
+        await new Promise((resolve) => {
+            setTimeout(() => {
+                fetch(url)
+                    .then(res => {
+                        if (res.status === 200) {
+                            res.body.pipe(fsSync.createWriteStream(`${writepath}${playerId}.png`));
+                            successCount++;
+                        } else {
+                            errorCount++;
+                        }
+                        console.log(`[${idx + 1}/${players.length}] ${playerId}`);
+                        resolve();
+                    })
+                    .catch(err => {
+                        console.log(`Error: ${playerId} - ${err.message}`);
+                        errorCount++;
+                        resolve();
+                    });
+            }, idx * DELAY_MS);
+        });
+    }
+
+    console.log(`\n✓ Descarga completada: ${successCount} éxito, ${errorCount} errores`);
 })();
 ```
 
@@ -438,44 +438,44 @@ Después de escribir casi el mismo código 4 veces, pensé: "esto es una mierda,
 
 ```javascript
 async function downloadResources(inputFile, outputDir, urlBuilder) {
-  await fs.mkdir(outputDir, { recursive: true });
-  const content = await fs.readFile(inputFile, 'utf8');
-  
-  // Si es JSON lo parseamos, si es texto lo separamos por líneas
-  let data;
-  if (inputFile.endsWith('.json')) {
-    data = JSON.parse(content);
-  } else {
-    data = content.split('\n').filter(line => line.trim() !== '');
-  }
-  
-  console.log(`Descargando ${data.length} recursos...\n`);
-  
-  //urlBuilder es una función que nos pasan
-  // y que sabe cómo construir la URL para cada tipo de recurso
-  for (let idx = 0; idx < data.length; idx++) {
-    const elem = data[idx];
-    const { url, filename } = urlBuilder(elem, idx);
-    
-    await new Promise((resolve) => {
-      setTimeout(() => {
-        fetch(url)
-          .then(res => {
-            if (res.status === 200) {
-              res.body.pipe(fsSync.createWriteStream(path.join(outputDir, filename)));
-              console.log(`[${idx + 1}/${data.length}] ✓ ${filename}`);
-            } else {
-              console.log(`[${idx + 1}/${data.length}] ✗ ${filename}`);
-            }
-            resolve();
-          })
-          .catch(err => {
-            console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - ${err.message}`);
-            resolve();
-          });
-      }, idx * DELAY_MS);
-    });
-  }
+    await fs.mkdir(outputDir, { recursive: true });
+    const content = await fs.readFile(inputFile, 'utf8');
+
+    // Si es JSON lo parseamos, si es texto lo separamos por líneas
+    let data;
+    if (inputFile.endsWith('.json')) {
+        data = JSON.parse(content);
+    } else {
+        data = content.split('\n').filter(line => line.trim() !== '');
+    }
+
+    console.log(`Descargando ${data.length} recursos...\n`);
+
+    //urlBuilder es una función que nos pasan
+    // y que sabe cómo construir la URL para cada tipo de recurso
+    for (let idx = 0; idx < data.length; idx++) {
+        const elem = data[idx];
+        const { url, filename } = urlBuilder(elem, idx);
+
+        await new Promise((resolve) => {
+            setTimeout(() => {
+                fetch(url)
+                    .then(res => {
+                        if (res.status === 200) {
+                            res.body.pipe(fsSync.createWriteStream(path.join(outputDir, filename)));
+                            console.log(`[${idx + 1}/${data.length}] ✓ ${filename}`);
+                        } else {
+                            console.log(`[${idx + 1}/${data.length}] ✗ ${filename}`);
+                        }
+                        resolve();
+                    })
+                    .catch(err => {
+                        console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - ${err.message}`);
+                        resolve();
+                    });
+            }, idx * DELAY_MS);
+        });
+    }
 }
 ```
 
@@ -484,26 +484,26 @@ async function downloadResources(inputFile, outputDir, urlBuilder) {
 ```javascript
 // Para ligas:
 await downloadResources(
-  'leagues.txt',
-  'public/images/leagues/',
-  (elem) => ({
-    url: `https://playfootball.games/media/competitions/${elem}.png`,
-    filename: `${elem}.png`
-  })
+    'leagues.txt',
+    'public/images/leagues/',
+    (elem) => ({
+        url: `https://playfootball.games/media/competitions/${elem}.png`,
+        filename: `${elem}.png`
+    })
 );
 
 // Para jugadores:
 await downloadResources(
-  'public/json/fullplayers25.json',
-  'public/images/players/',
-  (player) => {
-    const playerId = player.id;
-    const directory = playerId % 32;
-    return {
-      url: `https://playfootball.games/media/players/${directory}/${playerId}.png`,
-      filename: `${playerId}.png`
-    };
-  }
+    'public/json/fullplayers25.json',
+    'public/images/players/',
+    (player) => {
+        const playerId = player.id;
+        const directory = playerId % 32;
+        return {
+            url: `https://playfootball.games/media/players/${directory}/${playerId}.png`,
+            filename: `${playerId}.png`
+        };
+    }
 );
 ```
 
@@ -580,13 +580,13 @@ const mongoose = require('mongoose');
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya';
 
 async function connectDB() {
-  try {
-    await mongoose.connect(MONGO_URI);
-    console.log('Conectado a MongoDB:', MONGO_URI);
-  } catch (error) {
-    console.error('Error conectando a MongoDB:', error.message);
-    process.exit(1);
-  }
+    try {
+        await mongoose.connect(MONGO_URI);
+        console.log('Conectado a MongoDB:', MONGO_URI);
+    } catch (error) {
+        console.error('Error conectando a MongoDB:', error.message);
+        process.exit(1);
+    }
 }
 
 module.exports = { connectDB, mongoose };
@@ -607,23 +607,23 @@ Define cómo se ve una **liga** en la BD.
 const { mongoose } = require('../db/connection');
 
 const leagueSchema = new mongoose.Schema({
-  id: {
-    type: Number,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true,
-    minlength: 2
-  },
-  code: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  country: String,
-  flagUrl: String
+    id: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    name: {
+        type: String,
+        required: true,
+        minlength: 2
+    },
+    code: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    country: String,
+    flagUrl: String
 });
 
 module.exports = mongoose.model('League', leagueSchema);
@@ -645,23 +645,23 @@ Define cómo se ve un **equipo** en la BD.
 const { mongoose } = require('../db/connection');
 
 const teamSchema = new mongoose.Schema({
-  id: {
-    type: Number,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true,
-    minlength: 2
-  },
-  leagueId: {
-    type: Number,
-    required: true
-  },
-  logoUrl: String,
-  country: String,
-  stadium: String
+    id: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    name: {
+        type: String,
+        required: true,
+        minlength: 2
+    },
+    leagueId: {
+        type: Number,
+        required: true
+    },
+    logoUrl: String,
+    country: String,
+    stadium: String
 });
 
 module.exports = mongoose.model('Team', teamSchema);
@@ -683,36 +683,36 @@ Define cómo se ve un **jugador** en la BD.
 const { mongoose } = require('../db/connection');
 
 const playerSchema = new mongoose.Schema({
-  id: {
-    type: Number,
-    required: true,
-    unique: true
-  },
-  name: {
-    type: String,
-    required: true,
-    minlength: 2
-  },
-  birthDate: Date,
-  nationality: String,
-  teamId: Number,
-  leagueId: Number,
-  position: {
-    type: String,
-    enum: ['DF', 'MF', 'FW', 'GK'],
-    required: true
-  },
-  number: Number,
-  imageUrl: String,
+    id: {
+        type: Number,
+        required: true,
+        unique: true
+    },
+    name: {
+        type: String,
+        required: true,
+        minlength: 2
+    },
+    birthDate: Date,
+    nationality: String,
+    teamId: Number,
+    leagueId: Number,
+    position: {
+        type: String,
+        enum: ['DF', 'MF', 'FW', 'GK'],
+        required: true
+    },
+    number: Number,
+    imageUrl: String,
 
 
-module.exports = mongoose.model('Player', playerSchema);
+    module.exports = mongoose.model('Player', playerSchema);
 ```
 
 **Validaciones**
 - `position` → Usa `enum` para limitar a solo 4 valores: DF (defensa), MF (mediocampo), FW (delantero), GK (portero)
-- Si intentas guardar `position: "INVALID"` → MongoDB rechaza 
-- Solo acepta los 4 valores válidos 
+- Si intentas guardar `position: "INVALID"` → MongoDB rechaza
+- Solo acepta los 4 valores válidos
 
 ---
 
@@ -727,9 +727,9 @@ Este script llena la BD con los 2038 jugadores que descargamos en el Milestone 1
 3. Lee el archivo fullplayers25.json
 4. Extrae ligas y equipos únicos
 5. Inserta todo en la BD
-   - 4 ligas
-   - 78 equipos
-   - 2038 jugadores
+- 4 ligas
+- 78 equipos
+- 2038 jugadores
 ```
 
 **Ejecutar:**
@@ -762,15 +762,15 @@ const { connectDB } = require('./src/db/connection');
 const PORT = process.env.PORT || 3000;
 
 async function startServer() {
-  try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Error iniciando servidor:', error.message);
-    process.exit(1);
-  }
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`Servidor corriendo en http://localhost:${PORT}`);
+        });
+    } catch (error) {
+        console.error('Error iniciando servidor:', error.message);
+        process.exit(1);
+    }
 }
 
 startServer();
@@ -800,43 +800,43 @@ Define cómo se ve un **usuario** en la BD.
 
 ```javascript
 const UserSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    minlength: 2
-  },
-  lastName: {
-    type: String,
-    required: true,
-    minlength: 2
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    match: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 8
-  },
-  role: {
-    type: String,
-    enum: ['admin', 'user'],
-    default: 'user'
-  }
+    name: {
+        type: String,
+        required: true,
+        minlength: 2
+    },
+    lastName: {
+        type: String,
+        required: true,
+        minlength: 2
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        match: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 8
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
+    }
 });
 
 UserSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+    if (!this.isModified('password')) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
 });
 
 UserSchema.methods.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+    return await bcrypt.compare(candidatePassword, this.password);
 };
 
 module.exports = mongoose.model('User', UserSchema);
@@ -869,11 +869,11 @@ Crea un nuevo usuario. Verifica que el email no exista y que sea el primero si e
 ```javascript
 POST /auth/register
 Body: {
-  name: "Juan",
-  lastName: "Pérez",
-  email: "juan@example.com",
-  password: "password123",
-  confirmPassword: "password123"
+    name: "Juan",
+        lastName: "Pérez",
+        email: "juan@example.com",
+        password: "password123",
+        confirmPassword: "password123"
 }
 ```
 
@@ -885,15 +885,15 @@ Body: {
 **Respuesta exitosa (201):**
 ```javascript
 {
-  success: true,
-  data: {
-    id: ObjectId,
-    name: "Juan",
-    lastName: "Pérez",
-    email: "juan@example.com",
-    role: "admin" // o "user"
-  },
-  message: "Primer usuario registrado como admin"
+    success: true,
+        data: {
+        id: ObjectId,
+            name: "Juan",
+            lastName: "Pérez",
+            email: "juan@example.com",
+            role: "admin" // o "user"
+    },
+    message: "Primer usuario registrado como admin"
 }
 ```
 
@@ -903,8 +903,8 @@ Verifica email y contraseña, crea una sesión.
 ```javascript
 POST /auth/login
 Body: {
-  email: "juan@example.com",
-  password: "password123"
+    email: "juan@example.com",
+        password: "password123"
 }
 ```
 
@@ -917,15 +917,15 @@ Body: {
 **Respuesta exitosa (200):**
 ```javascript
 {
-  success: true,
-  data: {
-    id: ObjectId,
-    name: "Juan",
-    lastName: "Pérez",
-    email: "juan@example.com",
-    role: "admin"
-  },
-  message: "Sesión iniciada exitosamente"
+    success: true,
+        data: {
+        id: ObjectId,
+            name: "Juan",
+            lastName: "Pérez",
+            email: "juan@example.com",
+            role: "admin"
+    },
+    message: "Sesión iniciada exitosamente"
 }
 ```
 
@@ -948,11 +948,11 @@ GET /auth/me
 Requiere estar autenticado. Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    userId: ObjectId,
-    role: "admin" // o "user"
-  }
+    success: true,
+        data: {
+        userId: ObjectId,
+            role: "admin" // o "user"
+    }
 }
 ```
 
@@ -988,19 +988,19 @@ GET /auth/me           // Requiere sesión activa
 Si hay errores de validación, se retorna **400**:
 ```javascript
 {
-  success: false,
-  error: {
-    code: 'VALIDATION_ERROR',
-    message: 'Datos de entrada inválidos',
-    details: [
-      {
-        value: "juan",
-        msg: "El nombre debe tener al menos 2 caracteres",
-        param: "name",
-        location: "body"
-      }
-    ]
-  }
+    success: false,
+        error: {
+        code: 'VALIDATION_ERROR',
+            message: 'Datos de entrada inválidos',
+            details: [
+            {
+                value: "juan",
+                msg: "El nombre debe tener al menos 2 caracteres",
+                param: "name",
+                location: "body"
+            }
+        ]
+    }
 }
 ```
 
@@ -1019,11 +1019,11 @@ router.post('/logout', isAuthenticated, authController.logout);
 
 // Si no está autenticado, retorna 401:
 {
-  success: false,
-  error: {
+    success: false,
+        error: {
     code: 'NOT_AUTHENTICATED',
-    message: 'Debe iniciar sesión'
-  }
+        message: 'Debe iniciar sesión'
+}
 }
 ```
 
@@ -1036,11 +1036,11 @@ router.post('/admin/players', isAuthenticated, isAdmin, createPlayer);
 
 // Si no es admin, retorna 403:
 {
-  success: false,
-  error: {
+    success: false,
+        error: {
     code: 'FORBIDDEN',
-    message: 'Acceso solo para administradores'
-  }
+        message: 'Acceso solo para administradores'
+}
 }
 ```
 
@@ -1056,13 +1056,13 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || '9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617',
-  resave: false,
-  saveUninitialized: true,
-  store: new MongoStore({
-    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya',
-    ttl: 24 * 60 * 60
-  })
+    secret: process.env.SESSION_SECRET || '9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617',
+    resave: false,
+    saveUninitialized: true,
+    store: new MongoStore({
+        mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/whoareya',
+        ttl: 24 * 60 * 60
+    })
 }));
 ```
 
@@ -1174,11 +1174,11 @@ Obtiene el número del juego actual basado en la fecha actual.
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    gameNumber: 347,
-    date: "2025-12-22T23:05:42.929Z"
-  }
+    success: true,
+        data: {
+        gameNumber: 347,
+            date: "2025-12-22T23:05:42.929Z"
+    }
 }
 ```
 
@@ -1190,12 +1190,12 @@ Ejemplo: `GET /api/game/1`
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    gameNumber: 1,
-    date: "2025-01-10T00:00:00.000Z",
-    hasSolution: true
-  }
+    success: true,
+        data: {
+        gameNumber: 1,
+            date: "2025-01-10T00:00:00.000Z",
+            hasSolution: true
+    }
 }
 ```
 
@@ -1207,11 +1207,11 @@ Ejemplo: `GET /api/solution/1`
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    playerId: 27440826,
-    _id: "694723512c19de3530d59c1e"
-  }
+    success: true,
+        data: {
+        playerId: 27440826,
+            _id: "694723512c19de3530d59c1e"
+    }
 }
 ```
 
@@ -1257,27 +1257,27 @@ Retorna jugadores con información de paginación:
 Respuesta exitosa (200):
 ```javascript
 {
-  success: true,
-  data: [
-    {
-      _id: "507f1f77bcf86cd799439011",
-      id: 12345,
-      name: "Lionel Messi",
-      position: "FW",
-      birthDate: "1987-06-24",
-      nationality: "Argentina",
-      teamId: 2030,
-      leagueId: 8,
-      imageUrl: "/images/players/12345.png"
-    },
-    ...
-  ],
-  pagination: {
-    page: 1,
-    limit: 10,
-    total: 2038,
-    pages: 204
-  }
+    success: true,
+        data: [
+        {
+            _id: "507f1f77bcf86cd799439011",
+            id: 12345,
+            name: "Lionel Messi",
+            position: "FW",
+            birthDate: "1987-06-24",
+            nationality: "Argentina",
+            teamId: 2030,
+            leagueId: 8,
+            imageUrl: "/images/players/12345.png"
+        },
+        ...
+    ],
+        pagination: {
+        page: 1,
+            limit: 10,
+            total: 2038,
+            pages: 204
+    }
 }
 ```
 
@@ -1290,30 +1290,30 @@ Ejemplo: `GET /api/players/507f1f77bcf86cd799439011`
 Respuesta exitosa (200):
 ```javascript
 {
-  success: true,
-  data: {
-    _id: "507f1f77bcf86cd799439011",
-    id: 12345,
-    name: "Lionel Messi",
-    position: "FW",
-    birthDate: "1987-06-24T00:00:00.000Z",
-    nationality: "Argentina",
-    teamId: 2030,
-    leagueId: 8,
-    number: 10,
-    imageUrl: "/images/players/12345.png"
-  }
+    success: true,
+        data: {
+        _id: "507f1f77bcf86cd799439011",
+            id: 12345,
+            name: "Lionel Messi",
+            position: "FW",
+            birthDate: "1987-06-24T00:00:00.000Z",
+            nationality: "Argentina",
+            teamId: 2030,
+            leagueId: 8,
+            number: 10,
+            imageUrl: "/images/players/12345.png"
+    }
 }
 ```
 
 Si no existe (404):
 ```javascript
 {
-  success: false,
-  error: {
-    code: 'PLAYER_NOT_FOUND',
-    message: 'Jugador no encontrado'
-  }
+    success: false,
+        error: {
+        code: 'PLAYER_NOT_FOUND',
+            message: 'Jugador no encontrado'
+    }
 }
 ```
 
@@ -1322,19 +1322,19 @@ Si no existe (404):
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: [
-    {
-      _id: "507f1f77bcf86cd799439012",
-      id: 2030,
-      name: "FC Barcelona",
-      leagueId: 8,
-      logoUrl: "/images/teams/2030.png",
-      country: "Spain",
-      stadium: "Camp Nou"
-    },
-    ...
-  ]
+    success: true,
+        data: [
+        {
+            _id: "507f1f77bcf86cd799439012",
+            id: 2030,
+            name: "FC Barcelona",
+            leagueId: 8,
+            logoUrl: "/images/teams/2030.png",
+            country: "Spain",
+            stadium: "Camp Nou"
+        },
+        ...
+    ]
 }
 ```
 
@@ -1343,18 +1343,18 @@ Respuesta:
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: [
-    {
-      _id: "507f1f77bcf86cd799439013",
-      id: 8,
-      name: "La Liga",
-      code: "es1",
-      country: "Spain",
-      flagUrl: "/images/leagues/es1.png"
-    },
-    ...
-  ]
+    success: true,
+        data: [
+        {
+            _id: "507f1f77bcf86cd799439013",
+            id: 8,
+            name: "La Liga",
+            code: "es1",
+            country: "Spain",
+            flagUrl: "/images/leagues/es1.png"
+        },
+        ...
+    ]
 }
 ```
 
@@ -1365,52 +1365,52 @@ Header: Cookie con sesión de admin
 Body:
 ```javascript
 {
-  id: 99999,
-  name: "Cristiano Ronaldo",
-  position: "FW",
-  birthDate: "1985-02-05",
-  nationality: "Portugal",
-  teamId: 236,
-  leagueId: 8,
-  number: 7,
-  imageUrl: "/images/players/99999.png"
+    id: 99999,
+        name: "Cristiano Ronaldo",
+        position: "FW",
+        birthDate: "1985-02-05",
+        nationality: "Portugal",
+        teamId: 236,
+        leagueId: 8,
+        number: 7,
+        imageUrl: "/images/players/99999.png"
 }
 ```
 
 Respuesta exitosa (201):
 ```javascript
 {
-  success: true,
-  data: {
-    _id: "507f1f77bcf86cd799439014",
-    id: 99999,
-    name: "Cristiano Ronaldo",
-    position: "FW",
+    success: true,
+        data: {
+        _id: "507f1f77bcf86cd799439014",
+            id: 99999,
+            name: "Cristiano Ronaldo",
+            position: "FW",
     ...
-  },
-  message: "Jugador creado exitosamente"
+    },
+    message: "Jugador creado exitosamente"
 }
 ```
 
 Si ID duplicado (400):
 ```javascript
 {
-  success: false,
-  error: {
-    code: 'DUPLICATE_ID',
-    message: 'Ya existe un jugador con ese ID'
-  }
+    success: false,
+        error: {
+        code: 'DUPLICATE_ID',
+            message: 'Ya existe un jugador con ese ID'
+    }
 }
 ```
 
 Si no es admin (403):
 ```javascript
 {
-  success: false,
-  error: {
-    code: 'FORBIDDEN',
-    message: 'Acceso solo para administradores'
-  }
+    success: false,
+        error: {
+        code: 'FORBIDDEN',
+            message: 'Acceso solo para administradores'
+    }
 }
 ```
 
@@ -1421,24 +1421,24 @@ Header: Cookie con sesión de admin
 Body (campos opcionales):
 ```javascript
 {
-  name: "Cristiano Ronaldo",
-  number: 7,
-  position: "FW"
+    name: "Cristiano Ronaldo",
+        number: 7,
+        position: "FW"
 }
 ```
 
 Respuesta exitosa (200):
 ```javascript
 {
-  success: true,
-  data: {
-    _id: "507f1f77bcf86cd799439014",
-    id: 99999,
-    name: "Cristiano Ronaldo",
-    number: 7,
+    success: true,
+        data: {
+        _id: "507f1f77bcf86cd799439014",
+            id: 99999,
+            name: "Cristiano Ronaldo",
+            number: 7,
     ...
-  },
-  message: "Jugador actualizado exitosamente"
+    },
+    message: "Jugador actualizado exitosamente"
 }
 ```
 
@@ -1449,8 +1449,8 @@ Header: Cookie con sesión de admin
 Respuesta exitosa (200):
 ```javascript
 {
-  success: true,
-  message: 'Jugador eliminado exitosamente'
+    success: true,
+        message: 'Jugador eliminado exitosamente'
 }
 ```
 
@@ -1465,11 +1465,11 @@ Calcula automáticamente basándose en la fecha actual y SOLUTION_START_DATE.
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    gameNumber: 347,
-    date: "2025-12-22T23:05:42.929Z"
-  }
+    success: true,
+        data: {
+        gameNumber: 347,
+            date: "2025-12-22T23:05:42.929Z"
+    }
 }
 ```
 
@@ -1486,12 +1486,12 @@ Ejemplo: `GET /api/game/100`
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    gameNumber: 100,
-    date: "2025-04-19T00:00:00Z",
-    hasSolution: true
-  }
+    success: true,
+        data: {
+        gameNumber: 100,
+            date: "2025-04-19T00:00:00Z",
+            hasSolution: true
+    }
 }
 ```
 
@@ -1504,11 +1504,11 @@ Ejemplo: `GET /api/solution/100`
 Respuesta:
 ```javascript
 {
-  success: true,
-  data: {
-    playerId: 185023,
-    _id: "694723512c19de3530d5a1f5"
-  }
+    success: true,
+        data: {
+        playerId: 185023,
+            _id: "694723512c19de3530d5a1f5"
+    }
 }
 ```
 
@@ -1524,9 +1524,9 @@ const limit = parseInt(req.query.limit) || 10;   // Items por página (default 1
 const skip = (page - 1) * limit;                 // Cuántos documentos saltar
 
 const players = await Player.find()
-  .skip(skip)
-  .limit(limit)
-  .lean();
+    .skip(skip)
+    .limit(limit)
+    .lean();
 ```
 
 **Ejemplos:**
@@ -1890,4 +1890,131 @@ package.json                       (Sin cambios)
 
 ---
 
+## Milestone 5: Panel de administración web
 
+Este milestone implementa un **panel web para administradores** que permite gestionar (CRUD) los jugadores de forma visual, consumiendo la **API REST del Milestone 4**. La implementación mantiene una separación clara entre juego (/), API (/api/*) y el panel (/admin/*).
+
+### 5.1 Objetivos (y cómo se han resuelto)
+
+- **Vistas del panel con EJS**
+  - `views/admin/dashboard.ejs`
+  - `views/admin/new-player.ejs`
+  - `views/admin/edit-player.ejs`
+  - Parciales: `views/partials/admin-header.ejs`, `views/partials/admin-footer.ejs`
+
+- **Formularios HTML para CRUD**
+  - Alta/edición con formularios HTML.
+  - Borrado desde el listado con confirmación.
+
+- **Frontend conectado a la API REST con fetch**
+  - Cliente común: `public/admin/js/api-client.js`.
+  - Operaciones consumidas:
+    - `GET /api/players` (con listado con paginación + filtros añadidos)
+    - `GET /api/players/:id`
+    - `POST /api/players`
+    - `PUT /api/players/:id`
+    - `DELETE /api/players/:id`
+    - `GET /api/teams`, `GET /api/leagues`
+
+- **Protección de rutas (solo admin)**
+  - `/admin/*` protegido por sesión + rol admin mediante middleware.
+  - `/api/players` (POST/PUT/DELETE) también requiere admin.
+
+- **Feedback visual**
+  - Mensajes de éxito/error en dashboard y formularios.
+  - Confirmación antes de eliminar.
+
+### 5.2 Separación de rutas
+
+- `/` → juego + vistas públicas y autenticación.
+- `/api/*` → API REST (JSON). Lectura pública, escritura protegida.
+- `/admin/*` → panel de administración (requiere autenticación + rol `admin`).
+
+### 5.3 Aproximación implementada (Cliente => API)
+
+Se ha implementado la **Aproximación 2** del enunciado:
+
+- El servidor solo renderiza vistas **GET** del panel.
+- El navegador ejecuta el CRUD llamando directamente a `/api/*` mediante `fetch`.
+
+Rutas del panel:
+
+- `GET /admin` → Dashboard.
+- `GET /admin/players/new` → Formulario de creación.
+- `GET /admin/players/edit/:id` → Formulario de edición.
+
+### 5.4 Dashboard (listado, búsqueda, filtros y paginación)
+
+Implementado en `views/admin/dashboard.ejs` + `public/admin/js/admin-main.js`:
+
+- Búsqueda (`search`).
+- Filtros por liga (`league`) y nacionalidad (`nationality`).
+- Paginación.
+- Acciones:
+  - Editar → navega a `/admin/players/edit/:id`.
+  - Eliminar → confirmación + `DELETE /api/players/:id`.
+
+### 5.5 Formularios de creación/edición
+
+- Crear jugador: `/admin/players/new`
+  - JS: `public/admin/js/player-form.js`.
+  - Carga equipos/ligas desde API para rellenar selects.
+  - Validación en cliente (HTML5 + JS): campos obligatorios y fecha razonable.
+
+- Editar jugador: `/admin/players/edit/:id`
+  - JS: `public/admin/js/player-edit.js`.
+  - Carga el jugador con `GET /api/players/:id`.
+  - Mantiene el `id` numérico del jugador al guardar.
+
+### 5.6 Login/Register (EJS + fetch)
+
+Para soportar el panel, se añadieron vistas de autenticación:
+
+- `GET /login` → `views/auth/login.ejs`
+- `GET /register` → `views/auth/register.ejs`
+
+Y su lógica de cliente:
+
+- `public/auth/js/login.js` → `POST /login`.
+- `public/auth/js/register.js` → `POST /register`.
+
+Tras login/registro correcto:
+
+- Se crea sesión (cookie `connect.sid`).
+- El cliente redirige:
+  - si `role === 'admin'` → `/admin`
+  - si no → `/`
+
+### 5.7 Seguridad (sesiones, roles y contraseñas)
+
+- **Sesiones**: `express-session` + persistencia en MongoDB con `connect-mongo`.
+- **Roles**: `admin` y `user`.
+  - Regla del proyecto: el **primer usuario registrado** se crea con rol `admin`; el resto con rol `user`.
+- **Contraseñas hasheadas**:
+  - En `src/models/User.js` se usa `bcryptjs` con un hook `pre('save')` para hashear la contraseña.
+  - En login se verifica con `comparePassword()` (bcrypt compare).
+
+### 5.8 Logout
+
+- Desde el panel: cabecera `views/partials/admin-header.ejs`.
+- Botón “Cerrar sesión” llama a `POST /logout`.
+- Para mostrar el usuario actual se usa `GET /current-user`.
+
+### Notas
+
+1. El panel solo es accesible para usuarios con rol `admin`.
+2. El `admin` será el primer usuario registrado en la aplicación. El resto serán `user`.
+3. Para probarlo, seguir estos pasos:
+   - Definir las variables de entorno en `.env`.
+   - Instalar dependencias.
+   - Iniciar MongoDB localmente.
+   - Correr los seeds de jugadores y soluciones (`src/db/seeders/seedPlayers.js` y `src/db/seeders/seedSolutions.js`).
+   - Iniciar el servidor.
+   - Acceder a `/register`.
+   - Registrar el primer usuario → será `admin`.
+   - Acceder al panel `/admin`.
+   - Ver el dashboard, crear/editar/borrar jugadores.
+   - Cerrar sesión.
+   - Registrar más usuarios → serán `user` y no podrán acceder al panel.
+
+---
