@@ -2018,3 +2018,49 @@ Tras login/registro correcto:
    - Registrar más usuarios → serán `user` y no podrán acceder al panel.
 
 ---
+
+## Milestone 6: Propuesta de ejercicios optativos
+En este milestone hemos implementado tres funcionalidades optativas que mejoran la seguridad, testing y experiencia de usuario de nuestra aplicación. Cada una de estas funcionalidades es independiente y puede utilizarse por separado.
+
+### 6.1 OAuth con Google/GitHub (Passport.js)
+### ¿Qué hemos hecho?
+Hemos implementado un sistema de autentificación social que permite a los usuarios iniciar sesión usando sus cuentas de Google o GitHub, eliminando la necesidad de recordar contraseñas adicionales.
+
+### 1. Configuración de Passport.js
+- Instalación de dependencias: passport, passport-google-oauth20, passport-github2
+- Creación del archivo src/config/passport.js con estrategias para Google y GitHub
+
+### 2. Configuración de estrategias OAuth
+- Google OAuth: Configuración para obtener perfil y email del usuario
+- GitHub OAuth: Manejo especial para cuentas con email privado
+- Lógica para crear automáticamente usuarios nuevos cuando se autentican por primera vez
+
+### 3. Rutas de autentificación
+Creación de src/routes/oauthRoutes.js con endpoints:
+- GET /auth/google - Inicia flujo de Google OAuth
+- GET /auth/google/callback - Callback de Google
+- GET /auth/github - Inicia flujo de GitHub OAuth
+- GET /auth/github/callback - Callback de GitHub
+
+### 4. Integración con el sistema existente
+- Los usuarios OAuth se integran automáticamente con el modelo User existente
+- Asignación automática de rol 'user' a nuevos usuarios OAuth
+- Redirección inteligente: admin → panel, user → home
+  
+### 5. Interfaz de usuario
+- Botones de "Login with Google" y "Login with GitHub" en la página de login
+- Estilos CSS personalizados para los botones OAuth
+- Experiencia de usuario fluida con redirección automática
+
+### Configuración necesaria:
+```javascript
+# Google OAuth
+GOOGLE_CLIENT_ID=tu_client_id_google
+GOOGLE_CLIENT_SECRET=tu_client_secret_google
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+
+# GitHub OAuth
+GITHUB_CLIENT_ID=tu_client_id_github
+GITHUB_CLIENT_SECRET=tu_client_secret_github
+GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
+```
