@@ -3,6 +3,10 @@
     <div class="admin-header__user">
       <span id="adminUserGreeting" class="admin-user__greeting" style="display:none;"></span>
 
+      <button id="adminHomeBtn" type="button" class="btn btn-secondary">
+        Volver al juego
+      </button>
+
       <button id="adminLogoutBtn" type="button" class="btn btn-secondary">
         Cerrar sesión
       </button>
@@ -13,6 +17,7 @@
 <script>
   (function () {
     const btn = document.getElementById('adminLogoutBtn');
+    const homeBtn = document.getElementById('adminHomeBtn');
     const greetingEl = document.getElementById('adminUserGreeting');
 
     const setGreeting = (nameOrEmail) => {
@@ -25,6 +30,12 @@
       greetingEl.textContent = `Hola, ${nameOrEmail}`;
       greetingEl.style.display = '';
     };
+
+    if (homeBtn) {
+      homeBtn.addEventListener('click', () => {
+        window.location.href = '/';
+      });
+    }
 
     try {
       const cachedName = localStorage.getItem('userName');
@@ -75,4 +86,3 @@
     });
   })();
 </script>
-
