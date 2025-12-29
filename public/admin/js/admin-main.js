@@ -198,10 +198,14 @@ function displayPlayers(players) {
     // Buscar el nombre del equipo basándose en el teamId
     let teamName = 'Sin equipo';
     let leagueName = 'Sin liga';
+    let teamLogoUrl = '';
 
     if (allTeams && allTeams.length > 0 && player.teamId) {
       const team = allTeams.find(t => t.id === player.teamId);
-      if (team) teamName = team.name;
+      if (team) {
+        teamName = team.name;
+        teamLogoUrl = team.logoUrl || `/images/teams/${team.id}.png`;
+      }
     }
 
     if (allLeagues && allLeagues.length > 0 && player.leagueId) {
@@ -219,7 +223,10 @@ function displayPlayers(players) {
       <img class="player-image" data-player-id="${player.id}" src="${imageUrl}" alt="${player.name}">
       <div class="player-info">
         <h3>${player.name}</h3>
-        <p class="player-team">${teamName}</p>
+        <p class="player-team">
+          ${teamLogoUrl ? `<img class="team-badge" data-team-id="${player.teamId}" src="${teamLogoUrl}" alt="${teamName}">` : ''}
+          <span>${teamName}</span>
+        </p>
         <p class="player-league">${leagueName}</p>
         <p class="player-nationality">${player.nationality || 'Sin nacionalidad'}</p>
       </div>
@@ -235,6 +242,14 @@ function displayPlayers(players) {
       console.log(`Imagen ${this.dataset.playerId}.png falló, cargando default.svg`);
       this.src = '/images/players/default.svg';
     }, { once: true });
+
+    // Fallback del escudo del equipo
+    const teamBadge = card.querySelector('.team-badge');
+    if (teamBadge) {
+      teamBadge.addEventListener('error', function() {
+        this.style.display = 'none';
+      }, { once: true });
+    }
 
     container.appendChild(card);
   });
@@ -383,4 +398,3 @@ function updateLeaguePreview() {
     preview.style.display = 'inline-block';
   }
 }
-

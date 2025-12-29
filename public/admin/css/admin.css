@@ -609,3 +609,17 @@ body {
 .custom-select-options::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Escudo del equipo en la tarjeta del jugador */
+.player-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-team .team-badge {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex: 0 0 18px;
+}
