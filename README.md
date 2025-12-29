@@ -2018,6 +2018,7 @@ Tras login/registro correcto:
    - Registrar más usuarios → serán `user` y no podrán acceder al panel.
 
 ---
+
 ## Milestone 6: Propuesta de ejercicios optativos
 En este milestone hemos implementado tres funcionalidades optativas que mejoran la seguridad, testing y experiencia de usuario de nuestra aplicación. Cada una de estas funcionalidades es independiente y puede utilizarse por separado.
 
