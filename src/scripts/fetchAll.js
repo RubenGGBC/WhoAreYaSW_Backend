@@ -4,7 +4,26 @@ const path = require('path');
 const fetch = require('node-fetch');
 
 const REQUESTS_PER_SECOND = 10;
-const DELAY_MS = 1000 / REQUESTS_PER_SECOND;
+
+async function downloadResource(elem, index, total, outputDir, urlBuilder) {
+  const { url, filename } = urlBuilder(elem, index);
+
+  try {
+    const res = await fetch(url);
+
+    if (res.status === 200) {
+      res.body.pipe(fsSync.createWriteStream(path.join(outputDir, filename)));
+      console.log(`[${index + 1}/${total}] ${filename} - OK`);
+      return true;
+    } else {
+      console.log(`[${index + 1}/${total}] ${filename} - Status: ${res.status}`);
+      return false;
+    }
+  } catch (err) {
+    console.log(`[${index + 1}/${total}] ${filename} - Error: ${err.message}`);
+    return false;
+  }
+}
 
 async function downloadResources(inputFile, outputDir, urlBuilder) {
   try {
@@ -19,33 +38,31 @@ async function downloadResources(inputFile, outputDir, urlBuilder) {
       data = content.split('\n').filter(line => line.trim() !== '');
     }
 
-    console.log(`Descargando ${data.length} recursos...\n`);
+    console.log(`Descargando ${data.length} recursos con throttling (${REQUESTS_PER_SECOND} req/s)...\n`);
 
-    for (let idx = 0; idx < data.length; idx++) {
-      const elem = data[idx];
-      const { url, filename } = urlBuilder(elem, idx);
+    let successCount = 0;
+    let errorCount = 0;
 
-      await new Promise((resolve) => {
-        setTimeout(() => {
-          fetch(url)
-            .then(res => {
-              if (res.status === 200) {
-                res.body.pipe(fsSync.createWriteStream(path.join(outputDir, filename)));
-                console.log(`[${idx + 1}/${data.length}] ✓ ${filename}`);
-              } else {
-                console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - status: ${res.status}`);
-              }
-              resolve();
-            })
-            .catch(err => {
-              console.log(`[${idx + 1}/${data.length}] ✗ ${filename} - ${err.message}`);
-              resolve();
-            });
-        }, idx * DELAY_MS);
-      });
+    // Procesar en bloques de REQUESTS_PER_SECOND cada segundo
+    for (let i = 0; i < data.length; i += REQUESTS_PER_SECOND) {
+      const batch = data.slice(i, i + REQUESTS_PER_SECOND);
+
+      console.log(`Bloque ${Math.floor(i/REQUESTS_PER_SECOND) + 1}/${Math.ceil(data.length/REQUESTS_PER_SECOND)}`);
+
+      // Ejecutar todas las peticiones del bloque en paralelo
+      const results = await Promise.all(
+        batch.map((elem, idx) => downloadResource(elem, i + idx, data.length, outputDir, urlBuilder))
+      );
+
+      results.forEach(success => success ? successCount++ : errorCount++);
+
+      // Esperar 1 segundo antes del siguiente bloque
+      if (i + REQUESTS_PER_SECOND < data.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
-    console.log(`\n✓ Descarga completada`);
+    console.log(`\nDescarga completada: ${successCount} éxito, ${errorCount} errores`);
 
   } catch (err) {
     console.error('Error:', err);
