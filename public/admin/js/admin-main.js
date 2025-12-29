@@ -2,12 +2,15 @@
 
 import { API } from './api-client.js';
 import { autocomplete } from './admin-autocomplete.js';
+import { createCustomSelect } from './custom-select.js';
 
 let currentPage = 1;
 let currentFilters = {};
 let allPlayers = [];
 let allTeams = [];
 let allLeagues = [];
+
+let teamFilterCustomSelect = null;
 
 // Cargar jugadores, ligas y nacionalidades al iniciar la página
 window.onload = async () => {
@@ -29,10 +32,6 @@ window.onload = async () => {
       leagueFilter.addEventListener('change', updateLeaguePreview);
     }
 
-    const teamFilter = document.getElementById('team-filter');
-    if (teamFilter) {
-      teamFilter.addEventListener('change', updateTeamPreview);
-    }
   } catch (error) {
     console.error('Error al inicializar el dashboard:', error);
     showDashboardMessage('Error al cargar los datos. Por favor recarga la página.', 'error');
@@ -87,20 +86,25 @@ async function loadTeamsData() {
     const result = await API.getTeams();
     allTeams = result.data || [];
 
-    const select = document.getElementById('team-filter');
-    if (select && allTeams.length > 0) {
-      select.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+    // Crear opciones para equipos (igual que en player-form/player-edit)
+    const teamOptions = allTeams.map(team => ({
+      value: String(team.id),
+      text: team.name,
+      imageUrl: team.logoUrl || `/images/teams/${team.id}.png`
+    }));
 
-      allTeams.forEach(team => {
-        const option = document.createElement('option');
-        option.value = String(team.id);
-        option.textContent = team.name;
-        select.appendChild(option);
-      });
-    }
+    // Crear custom select (igual que en player-form/player-edit)
+    teamFilterCustomSelect = createCustomSelect(
+      'team-select-container',
+      teamOptions,
+      'Todos los equipos',
+      (option) => option.imageUrl
+    );
+
   } catch (error) {
     console.error('Error al cargar equipos:', error);
     allTeams = [];
+    teamFilterCustomSelect = null;
   }
 }
 
@@ -230,8 +234,7 @@ function displayPlayers(players) {
     img.addEventListener('error', function() {
       console.log(`Imagen ${this.dataset.playerId}.png falló, cargando default.svg`);
       this.src = '/images/players/default.svg';
-      this.onerror = null; // Evitar loop infinito
-    });
+    }, { once: true });
 
     container.appendChild(card);
   });
@@ -317,14 +320,14 @@ function applyFilters() {
   currentFilters = {
     search: document.getElementById('search').value.trim(),
     league: document.getElementById('league-filter').value,
-    team: document.getElementById('team-filter').value,
+    team: teamFilterCustomSelect?.getValue?.() || '',
     nationality: document.getElementById('nationality-filter').value
   };
 
   // Limpiar filtros vacíos
   Object.keys(currentFilters).forEach(key => {
-    if (!currentFilters[key]){
-        delete currentFilters[key];
+    if (!currentFilters[key]) {
+      delete currentFilters[key];
     }
   });
 
@@ -377,23 +380,6 @@ function updateLeaguePreview() {
   const league = allLeagues.find(l => String(l.id) === value);
   if (league) {
     preview.src = league.flagUrl || `/images/leagues/${league.id}.png`;
-    preview.style.display = 'inline-block';
-  }
-}
-
-function updateTeamPreview() {
-  const select = document.getElementById('team-filter');
-  const preview = document.getElementById('team-preview');
-  const value = select.value;
-
-  if (!value) {
-    preview.style.display = 'none';
-    return;
-  }
-
-  const team = allTeams.find(t => String(t.id) === value);
-  if (team) {
-    preview.src = team.logoUrl || `/images/teams/${team.id}.png`;
     preview.style.display = 'inline-block';
   }
 }

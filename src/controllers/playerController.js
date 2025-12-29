@@ -33,6 +33,15 @@ exports.getPlayers = async (req, res) => {
             }
         }
 
+        // Filtro por equipo
+        const teamParam = req.query.team ?? req.query.teamId;
+        if (teamParam !== undefined && teamParam !== null && String(teamParam).trim() !== '') {
+            const teamId = Number(teamParam);
+            if (!Number.isNaN(teamId)) {
+                filter.teamId = teamId;
+            }
+        }
+
         // Filtro por nacionalidad
         if (req.query.nationality) {
             const nat = String(req.query.nationality).trim();
