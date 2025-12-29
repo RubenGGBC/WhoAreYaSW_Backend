@@ -1,19 +1,42 @@
 // Lógica para la vista principal del dashboard (lista de jugadores)
 
 import { API } from './api-client.js';
+import { autocomplete } from './admin-autocomplete.js';
 
 let currentPage = 1;
 let currentFilters = {};
-
+let allPlayers = [];
+let allTeams = [];
+let allLeagues = [];
 
 // Cargar jugadores, ligas y nacionalidades al iniciar la página
 window.onload = async () => {
+  try {
+    // Cargar ligas y equipos en paralelo
+    await Promise.all([loadLeagues(), loadTeamsData()]);
 
-  await loadLeagues();
-  await loadNationalities();
-  await loadPlayers();
+    // Cargar nacionalidades y jugadores
+    await loadNationalities();
+    await loadPlayers();
 
-  document.getElementById('filter-btn').addEventListener('click', applyFilters);
+    // Cargar autocomplete
+    await loadAllPlayersForAutocomplete();
+
+    document.getElementById('filter-btn')?.addEventListener('click', applyFilters);
+
+    const leagueFilter = document.getElementById('league-filter');
+    if (leagueFilter) {
+      leagueFilter.addEventListener('change', updateLeaguePreview);
+    }
+
+    const teamFilter = document.getElementById('team-filter');
+    if (teamFilter) {
+      teamFilter.addEventListener('change', updateTeamPreview);
+    }
+  } catch (error) {
+    console.error('Error al inicializar el dashboard:', error);
+    showDashboardMessage('Error al cargar los datos. Por favor recarga la página.', 'error');
+  }
 };
 
 //Metodo para el feedback (hecho por Copilot)
@@ -40,8 +63,7 @@ function showDashboardMessage(text, type = 'info', { autoHideMs } = {}) {
 async function loadLeagues() {
   try {
     const result = await API.getLeagues();
-    const leagues = result.data;
-
+    allLeagues = result.data;
 
     //Añadir al select de ligas las ligas
     const select = document.getElementById('league-filter');
@@ -49,7 +71,7 @@ async function loadLeagues() {
     // Mantener el primer option (Todas las ligas) para que no filtre de primeras
     select.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
 
-    leagues.forEach(league => {
+    allLeagues.forEach(league => {
       const option = document.createElement('option');
       option.value = String(league.id);
       option.textContent = league.name;
@@ -57,6 +79,28 @@ async function loadLeagues() {
     });
   } catch (error) {
     console.error('Error al cargar ligas:', error);
+  }
+}
+
+async function loadTeamsData() {
+  try {
+    const result = await API.getTeams();
+    allTeams = result.data || [];
+
+    const select = document.getElementById('team-filter');
+    if (select && allTeams.length > 0) {
+      select.querySelectorAll('option:not(:first-child)').forEach(o => o.remove());
+
+      allTeams.forEach(team => {
+        const option = document.createElement('option');
+        option.value = String(team.id);
+        option.textContent = team.name;
+        select.appendChild(option);
+      });
+    }
+  } catch (error) {
+    console.error('Error al cargar equipos:', error);
+    allTeams = [];
   }
 }
 
@@ -100,6 +144,7 @@ async function loadPlayers(page = 1) {
 
   try {
     loading.style.display = 'block';
+    loading.textContent = 'Cargando jugadores...';
     playersList.style.display = 'none';
 
     const filters = {
@@ -108,9 +153,16 @@ async function loadPlayers(page = 1) {
       limit: 20
     };
 
+    console.log('Cargando jugadores con filtros:', filters);
     const result = await API.getPlayers(filters);
+
+    if (!result || !result.data) {
+      throw new Error('Respuesta inválida del servidor');
+    }
+
     const players = result.data;
     const pagination = result.pagination;
+    console.log(`Jugadores cargados: ${players.length}`, players);
 
     currentPage = page;
 
@@ -123,7 +175,9 @@ async function loadPlayers(page = 1) {
 
   } catch (error) {
     console.error('Error al cargar jugadores:', error);
+    loading.style.display = 'block';
     loading.innerHTML = `<p class="error-message">Error al cargar jugadores: ${error.message}</p>`;
+    playersList.style.display = 'none';
   }
 }
 
@@ -137,21 +191,32 @@ function displayPlayers(players) {
   }
 
   players.forEach(player => {
-    const teamName = player?.teamId
+    // Buscar el nombre del equipo basándose en el teamId
+    let teamName = 'Sin equipo';
+    let leagueName = 'Sin liga';
 
-    const leagueName = player?.leagueId
+    if (allTeams && allTeams.length > 0 && player.teamId) {
+      const team = allTeams.find(t => t.id === player.teamId);
+      if (team) teamName = team.name;
+    }
 
-      // Crear tarjeta de jugador (ayudado por Copilot)
+    if (allLeagues && allLeagues.length > 0 && player.leagueId) {
+      const league = allLeagues.find(l => l.id === player.leagueId);
+      if (league) leagueName = league.name;
+    }
+
+    // Crear tarjeta de jugador (ayudado por Copilot)
     const card = document.createElement('div');
     card.className = 'player-card';
+
+    const imageUrl = `/images/players/${player.id}.png`;
+
     card.innerHTML = `
-      <img src="https://playfootball.games/media/players/${player.id % 32}/${player.id}.png" 
-           alt="${player.name}"
-           onerror="this.src='/images/players/default.png'">
+      <img class="player-image" data-player-id="${player.id}" src="${imageUrl}" alt="${player.name}">
       <div class="player-info">
         <h3>${player.name}</h3>
-        <p class="player-team">${teamName || 'Sin equipo'}</p>
-        <p class="player-league">${leagueName || 'Sin liga'}</p>
+        <p class="player-team">${teamName}</p>
+        <p class="player-league">${leagueName}</p>
         <p class="player-nationality">${player.nationality || 'Sin nacionalidad'}</p>
       </div>
       <div class="player-actions">
@@ -159,6 +224,15 @@ function displayPlayers(players) {
         <button class="btn btn-delete" onclick="deletePlayer('${player._id}', '${player.name}')">Eliminar</button>
       </div>
     `;
+
+    // Agregar manejador de error para la imagen de manera programática
+    const img = card.querySelector('.player-image');
+    img.addEventListener('error', function() {
+      console.log(`Imagen ${this.dataset.playerId}.png falló, cargando default.svg`);
+      this.src = '/images/players/default.svg';
+      this.onerror = null; // Evitar loop infinito
+    });
+
     container.appendChild(card);
   });
 }
@@ -243,6 +317,7 @@ function applyFilters() {
   currentFilters = {
     search: document.getElementById('search').value.trim(),
     league: document.getElementById('league-filter').value,
+    team: document.getElementById('team-filter').value,
     nationality: document.getElementById('nationality-filter').value
   };
 
@@ -271,3 +346,55 @@ window.deletePlayer = async (id, name) => {
     showDashboardMessage('Error al eliminar jugador: ' + error.message, 'error');
   }
 };
+
+async function loadAllPlayersForAutocomplete() {
+  try {
+    const result = await API.getPlayers({ page: 1, limit: 5000 });
+    allPlayers = result.data;
+
+    const searchInput = document.getElementById('search');
+    if (searchInput && allPlayers.length > 0) {
+      autocomplete(searchInput, allPlayers, (playerId) => {
+        window.editPlayer(playerId);
+      });
+    }
+  } catch (error) {
+    console.error('Error al cargar jugadores para autocomplete:', error);
+    // No bloquear la app si falla el autocomplete
+  }
+}
+
+function updateLeaguePreview() {
+  const select = document.getElementById('league-filter');
+  const preview = document.getElementById('league-preview');
+  const value = select.value;
+
+  if (!value) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  const league = allLeagues.find(l => String(l.id) === value);
+  if (league) {
+    preview.src = league.flagUrl || `/images/leagues/${league.id}.png`;
+    preview.style.display = 'inline-block';
+  }
+}
+
+function updateTeamPreview() {
+  const select = document.getElementById('team-filter');
+  const preview = document.getElementById('team-preview');
+  const value = select.value;
+
+  if (!value) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  const team = allTeams.find(t => String(t.id) === value);
+  if (team) {
+    preview.src = team.logoUrl || `/images/teams/${team.id}.png`;
+    preview.style.display = 'inline-block';
+  }
+}
+

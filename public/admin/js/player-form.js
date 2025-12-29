@@ -1,6 +1,10 @@
 // Lógica para el formulario de nuevo jugador
 
 import { API } from './api-client.js';
+import { createCustomSelect } from './custom-select.js';
+
+let teamSelect = null;
+let leagueSelect = null;
 
 window.onload = async () => {
   try {
@@ -21,25 +25,37 @@ async function loadFormData() {
     API.getLeagues()
   ]);
 
-  const teams = teamsResult?.data;
-  const leagues = leaguesResult?.data;
+  const teams = teamsResult?.data || [];
+  const leagues = leaguesResult?.data || [];
 
-  const teamSelect = document.getElementById('team');
-  const leagueSelect = document.getElementById('league');
+  // Crear opciones para equipos
+  const teamOptions = teams.map(team => ({
+    value: String(team.id),
+    text: team.name,
+    imageUrl: team.logoUrl || `/images/teams/${team.id}.png`
+  }));
 
-  (teams).forEach(team => {
-    const option = document.createElement('option');
-    option.value = String(team.id);
-    option.textContent = team.name;
-    teamSelect.appendChild(option);
-  });
+  // Crear opciones para ligas
+  const leagueOptions = leagues.map(league => ({
+    value: String(league.id),
+    text: league.name,
+    imageUrl: league.flagUrl || `/images/leagues/${league.id}.png`
+  }));
 
-  (leagues).forEach(league => {
-    const option = document.createElement('option');
-    option.value = String(league.id);
-    option.textContent = league.name;
-    leagueSelect.appendChild(option);
-  });
+  // Crear custom selects
+  teamSelect = createCustomSelect(
+    'team-select-container',
+    teamOptions,
+    'Selecciona un equipo',
+    (option) => option.imageUrl
+  );
+
+  leagueSelect = createCustomSelect(
+    'league-select-container',
+    leagueOptions,
+    'Selecciona una liga',
+    (option) => option.imageUrl
+  );
 }
 
 //Metodos de ayuda para el formulario (con ayuda de Copilot)
@@ -60,10 +76,11 @@ async function handleSubmit(e) {
 
   const name = document.getElementById('name').value.trim();
   const birthDate = document.getElementById('birthDate').value;
-  const teamIdRaw = document.getElementById('team').value;
-  const leagueIdRaw = document.getElementById('league').value;
+  const teamIdRaw = teamSelect?.getValue() || '';
+  const leagueIdRaw = leagueSelect?.getValue() || '';
   const nationality = document.getElementById('nationality').value.trim();
   const positionUi = document.getElementById('position').value;
+  const imageFile = document.getElementById('image').files[0];
 
   if (!validateForm({ name, birthDate, team: teamIdRaw, league: leagueIdRaw, nationality, position: positionUi })) {
     return;
@@ -74,18 +91,16 @@ async function handleSubmit(e) {
   // generar un ID numérico único para el jugador
   const id = generateNumericPlayerId();
 
-  const playerData = {
-    id,
-    name,
-    nationality,
-    teamId: teamIdRaw ? Number(teamIdRaw) : undefined,
-    leagueId: leagueIdRaw ? Number(leagueIdRaw) : undefined,
-    position: position || undefined
-  };
-
-  if (birthDate) {
-    playerData.birthDate = new Date(birthDate).toISOString();
-  }
+  // Crear FormData para enviar los datos junto con la imagen
+  const formData = new FormData();
+  formData.append('id', id);
+  formData.append('name', name);
+  formData.append('nationality', nationality);
+  if (teamIdRaw) formData.append('teamId', Number(teamIdRaw));
+  if (leagueIdRaw) formData.append('leagueId', Number(leagueIdRaw));
+  if (position) formData.append('position', position);
+  if (birthDate) formData.append('birthDate', new Date(birthDate).toISOString());
+  if (imageFile) formData.append('image', imageFile);
 
   //Para feedback
   const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -96,7 +111,7 @@ async function handleSubmit(e) {
   if (submitBtn) submitBtn.disabled = true;
 
   try {
-    await API.createPlayer(playerData);
+    await API.createPlayerWithImage(formData);
     showMessage('Jugador creado correctamente', 'success');
 
   } catch (error) {

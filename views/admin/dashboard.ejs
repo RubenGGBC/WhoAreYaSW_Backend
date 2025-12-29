@@ -26,9 +26,18 @@
       <div class="toolbar">
         <div class="search-bar">
           <input type="text" id="search" placeholder="Buscar jugador...">
-          <select id="league-filter">
-            <option value="">Todas las ligas</option>
-          </select>
+          <div class="select-wrapper">
+            <select id="league-filter">
+              <option value="">Todas las ligas</option>
+            </select>
+            <img id="league-preview" src="" alt="Liga" class="league-preview" style="display:none;">
+          </div>
+          <div class="select-wrapper">
+            <select id="team-filter">
+              <option value="">Todos los equipos</option>
+            </select>
+            <img id="team-preview" src="" alt="Equipo" class="team-preview" style="display:none;">
+          </div>
           <select id="nationality-filter">
             <option value="">Todas las nacionalidades</option>
           </select>

@@ -134,6 +134,25 @@ body {
   min-width: 150px;
 }
 
+.select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.select-wrapper select {
+  min-width: 150px;
+}
+
+.league-preview,
+.team-preview {
+  width: 35px;
+  height: 35px;
+  margin-left: -35px;
+  margin-right: 5px;
+  object-fit: contain;
+}
+
 /* Buttons */
 .btn {
   padding: 0.6rem 1.2rem;
@@ -231,6 +250,8 @@ body {
   object-fit: cover;
   border-radius: 4px;
   background: #f5f7fa;
+  border: 1px solid #e0e0e0;
+  display: block;
 }
 
 .player-info {
@@ -424,3 +445,167 @@ body {
   }
 }
 
+/* Autocomplete Styles */
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: #fff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 0 0 4px 4px;
+}
+
+.autocomplete-item {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+  display: flex;
+  align-items: center;
+}
+
+.autocomplete-item:hover {
+  background-color: #e9e9e9;
+}
+
+.autocomplete-active {
+  background-color: #3498db !important;
+  color: #ffffff;
+}
+
+.search-bar {
+  position: relative;
+}
+
+.search-bar input[type="text"] {
+  position: relative;
+}
+
+/* Custom Select con imágenes */
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select {
+  position: relative;
+  width: 100%;
+  cursor: pointer;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.custom-select-trigger:hover {
+  border-color: #3498db;
+}
+
+.custom-select.open .custom-select-trigger {
+  border-color: #3498db;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.custom-select-trigger img {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.custom-select-trigger span {
+  flex: 1;
+  color: #333;
+}
+
+.custom-select-trigger::after {
+  content: '▼';
+  font-size: 0.7rem;
+  color: #999;
+  margin-left: 10px;
+}
+
+.custom-select.open .custom-select-trigger::after {
+  content: '▲';
+}
+
+.custom-select-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #3498db;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.custom-select.open .custom-select-options {
+  display: block;
+}
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.custom-select-option:hover {
+  background-color: #f5f7fa;
+}
+
+.custom-select-option.selected {
+  background-color: #e8f4f8;
+}
+
+.custom-select-option img {
+  width: 24px;
+  height: 24px;
+  margin-right: 10px;
+  object-fit: contain;
+}
+
+.custom-select-option span {
+  flex: 1;
+  color: #333;
+}
+
+/* Scrollbar para las opciones */
+.custom-select-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-select-options::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.custom-select-options::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

@@ -1,8 +1,11 @@
 // Lógica para el formulario de editar jugador
 
 import { API } from './api-client.js';
+import { createCustomSelect } from './custom-select.js';
 
 let playerId = null;
+let teamSelect = null;
+let leagueSelect = null;
 
 // Cargar datos al iniciar la página
 window.onload = async () => {
@@ -25,26 +28,37 @@ async function loadFormData() {
     API.getLeagues()
   ]);
 
-  const teams = teamsResult.data;
-  const leagues = leaguesResult.data;
+  const teams = teamsResult?.data || [];
+  const leagues = leaguesResult?.data || [];
 
-  // Llenar select de equipos
-  const teamSelect = document.getElementById('team');
-  (teams || []).forEach(team => {
-    const option = document.createElement('option');
-    option.value = String(team.id);
-    option.textContent = team.name;
-    teamSelect.appendChild(option);
-  });
+  // Crear opciones para equipos
+  const teamOptions = teams.map(team => ({
+    value: String(team.id),
+    text: team.name,
+    imageUrl: team.logoUrl || `/images/teams/${team.id}.png`
+  }));
 
-  // Llenar select de ligas
-  const leagueSelect = document.getElementById('league');
-  (leagues || []).forEach(league => {
-    const option = document.createElement('option');
-    option.value = String(league.id);
-    option.textContent = league.name;
-    leagueSelect.appendChild(option);
-  });
+  // Crear opciones para ligas
+  const leagueOptions = leagues.map(league => ({
+    value: String(league.id),
+    text: league.name,
+    imageUrl: league.flagUrl || `/images/leagues/${league.id}.png`
+  }));
+
+  // Crear custom selects
+  teamSelect = createCustomSelect(
+    'team-select-container',
+    teamOptions,
+    'Selecciona un equipo',
+    (option) => option.imageUrl
+  );
+
+  leagueSelect = createCustomSelect(
+    'league-select-container',
+    leagueOptions,
+    'Selecciona una liga',
+    (option) => option.imageUrl
+  );
 }
 
 //cargar datos del jugador a editar (feedback de Copilot)
@@ -70,9 +84,14 @@ async function loadPlayerData() {
       document.getElementById('birthDate').value = '';
     }
 
-    document.getElementById('team').value = player?.teamId != null ? String(player.teamId) : '';
+    // Establecer valores en los custom selects
+    if (player?.teamId != null && teamSelect) {
+      teamSelect.setValue(String(player.teamId));
+    }
 
-    document.getElementById('league').value = player?.leagueId != null ? String(player.leagueId) : '';
+    if (player?.leagueId != null && leagueSelect) {
+      leagueSelect.setValue(String(player.leagueId));
+    }
 
     document.getElementById('nationality').value = player?.nationality || '';
 
@@ -114,28 +133,17 @@ async function handleSubmit(e) {
 
   const name = document.getElementById('name').value.trim();
   const birthDate = document.getElementById('birthDate').value;
-  const teamId = document.getElementById('team').value;
-  const leagueId = document.getElementById('league').value;
+  const teamId = teamSelect?.getValue() || '';
+  const leagueId = leagueSelect?.getValue() || '';
   const nationality = document.getElementById('nationality').value.trim();
   const positionUi = document.getElementById('position').value;
+  const imageFile = document.getElementById('image').files[0];
 
   if (!validateForm({ name, birthDate, team: teamId, league: leagueId, nationality, position: positionUi })) {
     return;
   }
 
   const position = uiPositionToApi(positionUi);
-
-  const playerData = {
-    name,
-    nationality,
-    teamId: teamId ? Number(teamId) : undefined,
-    leagueId: leagueId ? Number(leagueId) : undefined,
-    position: position || undefined
-  };
-
-  if (birthDate) {
-    playerData.birthDate = new Date(birthDate).toISOString();
-  }
 
   //Para el feedback
   const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -149,9 +157,19 @@ async function handleSubmit(e) {
   try {
     const current = await API.getPlayerById(playerId);
     const currentPlayer = current.data || current;
-    if (currentPlayer?.id != null) playerData.id = currentPlayer.id;
 
-    await API.updatePlayer(playerId, playerData);
+    // Crear FormData para enviar los datos junto con la imagen
+    const formData = new FormData();
+    if (currentPlayer?.id != null) formData.append('id', currentPlayer.id);
+    formData.append('name', name);
+    formData.append('nationality', nationality);
+    if (teamId) formData.append('teamId', Number(teamId));
+    if (leagueId) formData.append('leagueId', Number(leagueId));
+    if (position) formData.append('position', position);
+    if (birthDate) formData.append('birthDate', new Date(birthDate).toISOString());
+    if (imageFile) formData.append('image', imageFile);
+
+    await API.updatePlayerWithImage(playerId, formData);
     showMessage('Jugador actualizado correctamente', 'success');
 
   } catch (error) {

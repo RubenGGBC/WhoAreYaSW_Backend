@@ -72,6 +72,16 @@ export const API = {
     return await handleJsonResponse(response, 'Error al crear jugador');
   },
 
+  async createPlayerWithImage(formData) {
+    const response = await fetch(`/api/players`, {
+      method: 'POST',
+      // No establecer Content-Type para que el navegador lo establezca automáticamente con boundary
+      body: formData
+    });
+
+    return await handleJsonResponse(response, 'Error al crear jugador');
+  },
+
   async updatePlayer(id, playerData) {
     const response = await fetch(`/api/players/${id}`, {
       method: 'PUT',
@@ -79,6 +89,16 @@ export const API = {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(playerData)
+    });
+
+    return await handleJsonResponse(response, 'Error al actualizar jugador');
+  },
+
+  async updatePlayerWithImage(id, formData) {
+    const response = await fetch(`/api/players/${id}`, {
+      method: 'PUT',
+      // No establecer Content-Type para que el navegador lo establezca automáticamente con boundary
+      body: formData
     });
 
     return await handleJsonResponse(response, 'Error al actualizar jugador');

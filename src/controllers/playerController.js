@@ -1,6 +1,8 @@
 const Player = require('../models/Player');
 const Team = require('../models/Team');
 const League = require('../models/League');
+const fs = require('fs');
+const path = require('path');
 
 // Obtiene lista paginada de todos los jugadores
 exports.getPlayers = async (req, res) => {
@@ -190,6 +192,23 @@ exports.createPlayer = async (req, res) => {
 
         await newPlayer.save();
 
+        // Si se subió una imagen, renombrarla con el ID correcto del jugador
+        if (req.file) {
+            const oldPath = req.file.path;
+            const newPath = path.join('public/images/players', `${id}.png`);
+
+            // Renombrar el archivo temporal al nombre correcto
+            if (oldPath !== newPath) {
+                try {
+                    if (fs.existsSync(oldPath)) {
+                        fs.renameSync(oldPath, newPath);
+                    }
+                } catch (err) {
+                    console.error('Error renombrando archivo:', err);
+                }
+            }
+        }
+
         res.status(201).json({
             success: true,
             data: newPlayer,
@@ -292,6 +311,23 @@ exports.updatePlayer = async (req, res) => {
             },
             { new: true, runValidators: true }
         );
+
+        // Si se subió una nueva imagen, renombrarla con el ID correcto del jugador
+        if (req.file) {
+            const oldPath = req.file.path;
+            const newPath = path.join('public/images/players', `${id}.png`);
+
+            // Renombrar el archivo temporal al nombre correcto
+            if (oldPath !== newPath) {
+                try {
+                    if (fs.existsSync(oldPath)) {
+                        fs.renameSync(oldPath, newPath);
+                    }
+                } catch (err) {
+                    console.error('Error renombrando archivo:', err);
+                }
+            }
+        }
 
         res.status(200).json({
             success: true,
