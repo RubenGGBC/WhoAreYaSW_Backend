@@ -2020,11 +2020,11 @@ Tras login/registro correcto:
 ---
 
 ## Milestone 6: Propuesta de ejercicios optativos
-En este milestone hemos implementado tres funcionalidades optativas que mejoran la seguridad, testing y experiencia de usuario de nuestra aplicación. Cada una de estas funcionalidades es independiente y puede utilizarse por separado.
+En este milestone hemos implementado un sistema completo de autenticación OAuth con Google y GitHub, integrando Passport.js con nuestro sistema de autenticación existente basado en sesiones.
 
 ### 6.1 OAuth con Google/GitHub (Passport.js)
 ### ¿Qué hemos hecho?
-Hemos implementado un sistema de autentificación social que permite a los usuarios iniciar sesión usando sus cuentas de Google o GitHub, eliminando la necesidad de recordar contraseñas adicionales.
+En este milestone hemos implementado un sistema completo de autenticación OAuth con Google y GitHub, integrando Passport.js con nuestro sistema de autenticación existente basado en sesiones.
 
 ### 1. Configuración de Passport.js
 - Instalación de dependencias: passport, passport-google-oauth20, passport-github2
@@ -2064,3 +2064,53 @@ GITHUB_CLIENT_ID=tu_client_id_github
 GITHUB_CLIENT_SECRET=tu_client_secret_github
 GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
 ```
+### Pasos de configuración
+## Configuración de Google Cloud Console
+1. Acceder a https://console.cloud.google.com
+2. Crear nuevo proyecto: WhoAreYa-OAuth
+3. Ir a APIs y Servicios > Credenciales
+4. Crear ID de cliente OAuth 2.0
+5. Tipo de aplicación: Aplicación web
+6. Configurar URI autorizados
+
+### Configuración de GitHub OAuth
+1. Acceder a https://github.com/settings/developers
+2. Crear nueva OAuth App
+3. Configurar
+    - Application name: Who Are Ya? - Dev
+    - Homepage URL: http://localhost:3000
+    - Authorization callback URL: http://localhost:3000/auth/github/callback
+
+### Implementación 
+## Modificaciones al modelo User
+Se añadieron campos para manejar usuarios OAuth:
+- isOAuthUser: Boolean para identificar usuarios OAuth
+- oauthProvider: String con el proveedor (google/github)
+- oauthId: String con el ID del usuario en el proveedor
+
+## Flujo de autenticación
+1. Usuario hace clic en botón Google/GitHub
+2. Redirigido al proveedor para autorización
+3. Callback a nuestra aplicación con datos del usuario
+4. Passport busca usuario por email:
+   - Si existe: inicia sesión
+   - Si no existe: crea nuevo usuario
+5. Redirige según rol del usuario
+
+### Archivos creados/modificados
+## Archivos nuevos 
+- src/config/passport.js - Configuración de estrategias OAuth
+- src/routes/oauthRoutes.js - Rutas para autenticación OAuth
+- src/controllers/oauthController.js - Controlador para callbacks
+- public/auth/css/oauth.css - Estilos para botones OAuth
+
+## Archivos modificados
+- src/models/User.js - Añadidos campos para OAuth
+- src/app.js - Inicialización de Passport
+- views/auth/login.ejs - Añadidos botones OAuth
+- package.json - Dependencias de Passport
+
+El sistema de autenticación OAuth está completamente integrado con nuestro backend existente. Los usuarios pueden autenticarse con sus cuentas de Google o GitHub sin necesidad de registro manual, mientras mantenemos nuestro sistema de roles y sesiones existente.
+
+
+
