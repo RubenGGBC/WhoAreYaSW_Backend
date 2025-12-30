@@ -172,27 +172,62 @@ exports.logout = async (req, res) => {
         });
     }
 };
-exports.getCurrentUser = (req, res) => {
-    // Verificar tanto sesión manual como Passport
-    if (!req.session.userId && !req.user) {
-        return res.status(401).json({
+exports.getCurrentUser = async (req, res) => {
+    try {
+        // Verificar tanto sesión manual como Passport
+        if (!req.session.userId && !req.user) {
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'NOT_AUTHENTICATED',
+                    message: 'Usuario no autenticado'
+                }
+            });
+        }
+
+        // Si viene de OAuth (req.user existe), usar esos datos directamente
+        if (req.user) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    userId: req.user._id,
+                    name: req.user.name,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                    role: req.user.role
+                }
+            });
+        }
+
+        // Si es sesión manual, obtener datos del usuario desde DB
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'USER_NOT_FOUND',
+                    message: 'Usuario no encontrado'
+                }
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: {
+                userId: user._id,
+                name: user.name,
+                lastName: user.lastName,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
             success: false,
             error: {
-                code: 'NOT_AUTHENTICATED',
-                message: 'Usuario no autenticado'
+                code: 'GET_USER_ERROR',
+                message: error.message
             }
         });
     }
-
-    // Priorizar datos de sesión, pero si no existen usar req.user (OAuth)
-    const userId = req.session.userId || req.user._id;
-    const role = req.session.userRole || req.user.role;
-
-    res.status(200).json({
-        success: true,
-        data: {
-            userId: userId,
-            role: role
-        }
-    });
 };
