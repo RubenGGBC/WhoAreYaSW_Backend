@@ -2,34 +2,47 @@ const { mongoose } = require('../db/connection');
 const bcrypt = require('bcryptjs');
 
 const UserSchema = new mongoose.Schema({
-    name:{
-        type:String,
-        required:true,
-        minlength:2,
+    name: {
+        type: String,
+        required: true,
+        minlength: 2,
     },
-    lastName:{
-        type:String,
-        required:true,
-        minlength:2,
-    },
-    email:{
-        type:String,
-        required:true,
-        unique:true,
-        match:/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
-    },
-    password:{
-        type:String,
+    lastName: {
+        type: String,
         required: function() {
-            // Solo requerido si no es usuario OAuth
+            // Solo requerido si NO es usuario OAuth
             return !this.isOAuthUser;
         },
-        minlength:8,
+        validate: {
+            validator: function(value) {
+                // Si es usuario OAuth, no validamos longitud
+                if (this.isOAuthUser) {
+                    return true;
+                }
+                // Si no es OAuth, validamos mínimo 2 caracteres
+                return value && value.length >= 2;
+            },
+            message: 'El apellido debe tener al menos 2 caracteres para usuarios locales'
+        },
+        default: ''
     },
-    role:{
-        type:String,
-        enum:['admin','user'],
-        default:'user',
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        match: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+    },
+    password: {
+        type: String,
+        required: function() {
+            return !this.isOAuthUser;
+        },
+        minlength: 8,
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user',
     },
     isOAuthUser: {
         type: Boolean,
@@ -49,29 +62,29 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Middleware para hashear contraseña SOLO si no es OAuth
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function(next) {
+    // Solo hashear si es usuario local (no OAuth) y la contraseña fue modificada
     if (this.isOAuthUser || !this.isModified('password')) {
-        return next();
+        // Para usuarios OAuth, no llamamos next() porque no hay que hacer nada
+        return;
     }
 
     try {
-        //Usamos 10 rondas para generar el salt
         const salt = await bcrypt.genSalt(10);
         this.password = await bcrypt.hash(this.password, salt);
-        next();
     } catch (error) {
-        next(error);
+        // Si hay error, lo lanzamos para que Mongoose lo capture
+        throw error;
     }
 });
 
-// Método para comparar contraseñas (solo si no es OAuth)
+// Método para comparar contraseñas (UN SOLO MÉTODO)
 UserSchema.methods.comparePassword = async function(candidatePassword) {
-    // Si es usuario OAuth, no hay contraseña para comparar
-    if (this.isOAuthUser) {
-        return false;
-    }
-
     try {
+        // Si es usuario OAuth, no tiene contraseña
+        if (this.isOAuthUser) {
+            return false;
+        }
         return await bcrypt.compare(candidatePassword, this.password);
     } catch (error) {
         return false;

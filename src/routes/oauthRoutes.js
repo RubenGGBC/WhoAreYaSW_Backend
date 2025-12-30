@@ -1,3 +1,4 @@
+// src/routes/oauthRoutes.js
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
@@ -16,11 +17,16 @@ router.get('/auth/google/callback',
         failureMessage: true
     }),
     (req, res) => {
-        // Redirigir según rol
-        if (req.user && req.user.role === 'admin') {
-            res.redirect('/admin');
-        } else {
-            res.redirect('/');
+        try {
+            // Redirigir según rol
+            if (req.user && req.user.role === 'admin') {
+                res.redirect('/admin');
+            } else {
+                res.redirect('/');
+            }
+        } catch (error) {
+            console.error('Error en callback de Google:', error);
+            res.redirect('/login?error=oauth');
         }
     }
 );
@@ -38,20 +44,26 @@ router.get('/auth/github/callback',
         failureMessage: true
     }),
     (req, res) => {
-        // Redirigir según rol
-        if (req.user && req.user.role === 'admin') {
-            res.redirect('/admin');
-        } else {
-            res.redirect('/');
+        try {
+            // Redirigir según rol
+            if (req.user && req.user.role === 'admin') {
+                res.redirect('/admin');
+            } else {
+                res.redirect('/');
+            }
+        } catch (error) {
+            console.error('Error en callback de GitHub:', error);
+            res.redirect('/login?error=oauth');
         }
     }
 );
 
 // ===== LOGOUT =====
-router.get('/auth/logout', (req, res, next) => {
+router.get('/auth/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
-            return next(err);
+            console.error('Error en logout:', err);
+            return res.redirect('/');
         }
         req.session.destroy((err) => {
             if (err) {
