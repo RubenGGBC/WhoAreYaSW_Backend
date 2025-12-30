@@ -2064,7 +2064,7 @@ GITHUB_CLIENT_ID=tu_client_id_github
 GITHUB_CLIENT_SECRET=tu_client_secret_github
 GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
 ```
-## Pasos de configuración
+### Pasos de configuración
 ### Configuración de Google Cloud Console
 1. Acceder a https://console.cloud.google.com
 2. Crear nuevo proyecto: WhoAreYa-OAuth
@@ -2081,7 +2081,7 @@ GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
     - Homepage URL: http://localhost:3000
     - Authorization callback URL: http://localhost:3000/auth/github/callback
 
-## Implementación 
+### Implementación 
 ### Modificaciones al modelo User
 Se añadieron campos para manejar usuarios OAuth:
 - isOAuthUser: Boolean para identificar usuarios OAuth
@@ -2097,7 +2097,7 @@ Se añadieron campos para manejar usuarios OAuth:
    - Si no existe: crea nuevo usuario
 5. Redirige según rol del usuario
 
-## Archivos creados/modificados
+### Archivos creados/modificados
 ### Archivos nuevos 
 - src/config/passport.js - Configuración de estrategias OAuth
 - src/routes/oauthRoutes.js - Rutas para autenticación OAuth
@@ -2112,5 +2112,8 @@ Se añadieron campos para manejar usuarios OAuth:
 
 El sistema de autenticación OAuth está completamente integrado con nuestro backend existente. Los usuarios pueden autenticarse con sus cuentas de Google o GitHub sin necesidad de registro manual, mientras mantenemos nuestro sistema de roles y sesiones existente.
 
+### 6.2 Tests
+### ¿Qué hemos hecho?
 
-
+### 6.3 JSON Web Tokens
+### ¿Qué hemos hecho?
