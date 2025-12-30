@@ -18,6 +18,12 @@ router.get('/auth/google/callback',
     }),
     (req, res) => {
         try {
+            // Establecer variables de sesión manualmente (igual que login regular)
+            if (req.user) {
+                req.session.userId = req.user._id;
+                req.session.userRole = req.user.role;
+            }
+            
             // Redirigir según rol
             if (req.user && req.user.role === 'admin') {
                 res.redirect('/admin');
@@ -45,6 +51,12 @@ router.get('/auth/github/callback',
     }),
     (req, res) => {
         try {
+            // Establecer variables de sesión manualmente (igual que login regular)
+            if (req.user) {
+                req.session.userId = req.user._id;
+                req.session.userRole = req.user.role;
+            }
+            
             // Redirigir según rol
             if (req.user && req.user.role === 'admin') {
                 res.redirect('/admin');

@@ -145,6 +145,7 @@ exports.login = async (req, res) => {
 };
 exports.logout = async (req, res) => {
     try {
+        // Destruir la sesión (esto también limpia los datos de Passport)
         req.session.destroy((err) => {
             if (err) {
                 return res.status(500).json({
@@ -172,7 +173,8 @@ exports.logout = async (req, res) => {
     }
 };
 exports.getCurrentUser = (req, res) => {
-    if (!req.session.userId) {
+    // Verificar tanto sesión manual como Passport
+    if (!req.session.userId && !req.user) {
         return res.status(401).json({
             success: false,
             error: {
@@ -182,11 +184,15 @@ exports.getCurrentUser = (req, res) => {
         });
     }
 
+    // Priorizar datos de sesión, pero si no existen usar req.user (OAuth)
+    const userId = req.session.userId || req.user._id;
+    const role = req.session.userRole || req.user.role;
+
     res.status(200).json({
         success: true,
         data: {
-            userId: req.session.userId,
-            role: req.session.userRole
+            userId: userId,
+            role: role
         }
     });
 };

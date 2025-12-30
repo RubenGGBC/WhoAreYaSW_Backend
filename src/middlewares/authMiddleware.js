@@ -1,6 +1,7 @@
 // Verificar que el usuario esté autenticado
 exports.isAuthenticated = (req, res, next) => {
-    if (!req.session.userId) {
+    // Verificar tanto sesión manual como Passport (OAuth)
+    if (!req.session.userId && !req.user) {
         return res.status(401).json({
             success: false,
             error: {
