@@ -3,6 +3,8 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const oauthRoutes = require('./routes/oauthRoutes');
+const passport = require('passport');
 const path = require('path');
 
 const app = express();
@@ -25,6 +27,11 @@ app.use(session({
   })
 }));
 
+// INICIALIZAR PASSPORT
+app.use(passport.initialize());
+app.use(passport.session());
+require('./config/passport')(passport); // Cargar configuración
+
 // Rutas API (primero para evitar conflictos)
 app.use('/api', require('./routes/playerRoutes'));
 app.use('/api', require('./routes/gameRoutes'));
@@ -35,6 +42,7 @@ app.use('/admin', adminRoutes);
 
 // Rutas de autentificación (al final, sin prefijo)
 app.use('/', authRoutes);
+app.use('/', oauthRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

@@ -10,9 +10,30 @@ exports.getRegisterView = (req, res) => {
 
 // GET - Renderizar vista de login
 exports.getLoginView = (req, res) => {
+    // Obtener mensaje de error de query string si existe
+    const queryError = req.query.error;
+    let errorMessage = null;
+
+    if (queryError) {
+        switch(queryError) {
+            case 'google':
+                errorMessage = 'Error al iniciar sesión con Google. Inténtalo de nuevo.';
+                break;
+            case 'github':
+                errorMessage = 'Error al iniciar sesión con GitHub. Inténtalo de nuevo.';
+                break;
+            case 'oauth':
+                errorMessage = 'Error en la autenticación OAuth. Inténtalo más tarde.';
+                break;
+            default:
+                errorMessage = 'Error en la autenticación.';
+        }
+    }
     res.render('auth/login', {
         title: 'Iniciar Sesión',
-        error: null
+        error: null,
+        queryError: errorMessage, // Error de OAuth desde query string
+        success: req.query.success || null
     });
 };
 
