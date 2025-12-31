@@ -2120,7 +2120,9 @@ Hemos implementado un sistema completo de pruebas para el backend utilizando las
     - Supertest: Para pruebas de integración de rutas HTTP
     - MongoDB Memory Server: Base de datos en memoria para pruebas aisladas
     - Cross-env: Para manejo de variables de entorno en diferentes sistemas
+    
 ### Estructura de Tests
+```
 tests/
 ├── setup.js                    # Configuración de BD en memoria para tests
 ├── test-app.js                 # Versión de la app sin Passport para tests
@@ -2128,6 +2130,7 @@ tests/
 ├── player-model.test.js       # Tests del modelo Player
 ├── auth-routes.test.js        # Tests de rutas de autenticación
 └── controllers.test.js        # Tests de controladores públicos
+```
 
 ### Tests Implementados
 1. Tests de Modelos (auth.test.js, player-model.test.js)
