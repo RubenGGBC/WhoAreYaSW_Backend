@@ -1,36 +1,56 @@
 const fs = require('fs').promises;
 const path = require('path');
-const Pokemon = require('../../models/Pokemon');
-const { mongoose } = require('../connection');
 
-const POKEMON_TYPES = [
-    'Normal', 'Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Fighting',
-    'Poison', 'Ground', 'Flying', 'Psychic', 'Bug', 'Rock', 'Ghost',
-    'Dragon', 'Dark', 'Steel', 'Fairy'
-];
+require('dotenv').config();
+
+const Pokemon = require('../../models/Pokemon');
+const { connectDB, mongoose } = require('../connection');
+
+function capitalizeType(type) {
+    if (!type || typeof type !== 'string') return undefined;
+    const lower = type.trim().toLowerCase();
+    return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
 
 (async () => {
     try {
+
+        console.log('Conectando a MongoDB...');
+        await connectDB();
+
         console.log('Leyendo pokedex...');
-        const pokedexPath = path.join(__dirname, '../../../json/pokedex-1-1000.json');
+        const pokedexPath = path.join(__dirname, '../../../public/json/pokedex-1-1000.json');
         const pokedexContent = await fs.readFile(pokedexPath, 'utf8');
         const pokedexData = JSON.parse(pokedexContent);
 
         console.log(`Preparando ${pokedexData.length} pokémon para insertar...`);
 
-        const pokemonToInsert = pokedexData.map((poke) => ({
-            id: poke.pokemonId,
-            name: poke.pokemonName,
-            type1: POKEMON_TYPES[Math.floor(Math.random() * POKEMON_TYPES.length)],
-            imageUrl: `images/pokemon/${poke.pokemonId}.png`
-        }));
+        const pokemonToInsert = pokedexData.map((poke) => {
+            const type1 = capitalizeType(poke.type1);
+            const type2Cap = capitalizeType(poke.type2);
+            const type2 = type2Cap && type2Cap !== type1 ? type2Cap : undefined;
+
+            return {
+                id: poke.pokemonId,
+                name: poke.pokemonName,
+                type1,
+                ...(type2 ? { type2 } : {}),
+                imageUrl: `images/pokemon/${poke.pokemonId}.png`
+            };
+        });
 
         await Pokemon.insertMany(pokemonToInsert);
 
         console.log(`✓ ${pokedexData.length} pokémon insertados exitosamente`);
+        await mongoose.connection.close();
         process.exit(0);
     } catch (error) {
-        console.error('Error en seeder:', error.message);
+        console.error('Error en seeder:', error);
+        try {
+            if (mongoose.connection?.readyState === 1) await mongoose.connection.close();
+        } catch {
+            // noop
+        }
         process.exit(1);
     }
-})()
+})();
