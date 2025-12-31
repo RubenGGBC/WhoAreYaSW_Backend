@@ -2114,6 +2114,97 @@ El sistema de autenticación OAuth está completamente integrado con nuestro bac
 
 ### 6.2 Tests
 ### ¿Qué hemos hecho?
+### Configuración de Testing
+Hemos implementado un sistema completo de pruebas para el backend utilizando las siguientes herramientas:
+    - Jest: Framework de testing para JavaScript
+    - Supertest: Para pruebas de integración de rutas HTTP
+    - MongoDB Memory Server: Base de datos en memoria para pruebas aisladas
+    - Cross-env: Para manejo de variables de entorno en diferentes sistemas
+### Estructura de Tests
+tests/
+├── setup.js                    # Configuración de BD en memoria para tests
+├── test-app.js                 # Versión de la app sin Passport para tests
+├── auth.test.js               # Tests del modelo User
+├── player-model.test.js       # Tests del modelo Player
+├── auth-routes.test.js        # Tests de rutas de autenticación
+└── controllers.test.js        # Tests de controladores públicos
+
+### Tests Implementados
+1. Tests de Modelos (auth.test.js, player-model.test.js)
+- Modelo User:
+    - Creación de usuario válido
+    - Búsqueda por email
+    - Validación de email único
+    - Validación de contraseña mínima (8 caracteres)
+
+- Modelo Player:
+    - Creación con datos mínimos
+    - Creación con todos los campos
+    - Validación de posición (solo DF, MF, FW, GK)
+    - Campos opcionales pueden estar vacíos
+
+2. Tests de Rutas de Autenticación (auth-routes.test.js)
+- POST /register:
+    - Registro exitoso de nuevo usuario
+    - Fallo si email ya existe
+    - Fallo si contraseñas no coinciden
+
+- POST /login:
+    - Login exitoso con credenciales correctas
+    - Fallo con credenciales incorrectas
+
+3. Tests de Controladores Públicos (controllers.test.js)
+    - GET /api/players: Listado de jugadores con paginación
+    - GET /api/players?search=: Filtrado por nombre (si está implementado)
+    - GET /api/players/:id: Obtención de jugador específico
+    - GET /api/game/current: Obtención del juego actual
+
+### Scripts de Testing
+En package.json:
+```
+"scripts": {
+  "test": "cross-env NODE_ENV=test jest --verbose",
+  "test:watch": "cross-env NODE_ENV=test jest --watch",
+  "test:coverage": "cross-env NODE_ENV=test jest --coverage"
+}
+```
+### Ejecución de Tests
+```
+# Ejecutar todos los tests
+npm test
+
+# Ejecutar tests específicos
+npm test -- tests/auth.test.js
+npm test -- tests/controllers.test.js
+
+```
+
+### Configuración Técnica
+Jest Configuration (jest.config.js)
+
+```
+module.exports = {
+  testEnvironment: 'node',
+  testMatch: ['**/tests/**/*.test.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  verbose: true,
+  forceExit: true
+};
+
+```
+### Cobertura de Tests
+Los tests cubren:
+    - Validaciones de modelos
+    - Operaciones CRUD básicas
+    - Rutas de autenticación
+    - Rutas públicas del juego
+    - Manejo de errores HTTP
+    - Sesiones y autenticación
+
+### Notas Importantes
+- Todas las pruebas son independientes y no dejan datos residuales
+- La base de datos real del proyecto no es afectada por los tests
+
 
 ### 6.3 JSON Web Tokens
 ### ¿Qué hemos hecho?
