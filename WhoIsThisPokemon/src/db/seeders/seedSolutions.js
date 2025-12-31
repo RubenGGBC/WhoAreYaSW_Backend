@@ -1,10 +1,16 @@
+require('dotenv').config();
+
 const PokemonSolution = require('../../models/PokemonSolution');
-const { mongoose } = require('../connection');
+
+const { connectDB, mongoose } = require('../connection');
 
 const POKEMON_SOLUTION_START_DATE = process.env.POKEMON_SOLUTION_START_DATE || '2025-01-10';
 
 (async () => {
     try {
+        console.log('Conectando a MongoDB...');
+        await connectDB();
+
         console.log('Limpiando soluciones previas...');
         await PokemonSolution.deleteMany({});
 
@@ -28,9 +34,15 @@ const POKEMON_SOLUTION_START_DATE = process.env.POKEMON_SOLUTION_START_DATE || '
         await PokemonSolution.insertMany(solutions);
 
         console.log(`✓ ${daysToCreate} soluciones creadas exitosamente`);
+        await mongoose.connection.close();
         process.exit(0);
     } catch (error) {
-        console.error('Error en seeder:', error.message);
+        console.error('Error en seeder:', error);
+        try {
+            if (mongoose.connection?.readyState === 1) await mongoose.connection.close();
+        } catch {
+            // noop
+        }
         process.exit(1);
     }
-})()
+})();
