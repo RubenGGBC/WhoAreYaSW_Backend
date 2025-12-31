@@ -245,10 +245,8 @@ Tras ejecutar los seeders:
 
 ---
 
-## Nota sobre el enunciado “original”
+## Milestone 3: Gestión de usuarios: autentificación y autorización
 
-Las milestones del enunciado (scraping, MongoDB/modelos, etc.) se plantean para el proyecto principal de fútbol. En este extra se han adaptado a Pokémon:
-- en vez de descargar banderas/escudos/jugadores, descargamos sprites oficiales de Pokémon.
-- en vez de Player/Team/League, modelamos Pokemon y la solución diaria del juego.
+Se ha aprovechado el sistema de usuarios del backend principal de WhoAreYa.
 
 ---
