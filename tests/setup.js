@@ -3,30 +3,39 @@ const mongoose = require('mongoose');
 
 let mongoServer;
 
-// Antes de todos los tests
 beforeAll(async () => {
+    // Configurar variables para tests
+    process.env.GOOGLE_CLIENT_ID = 'test';
+    process.env.GOOGLE_CLIENT_SECRET = 'test';
+    process.env.GOOGLE_CALLBACK_URL = 'http://test.com';
+    process.env.GITHUB_CLIENT_ID = 'test';
+    process.env.GITHUB_CLIENT_SECRET = 'test';
+    process.env.GITHUB_CALLBACK_URL = 'http://test.com';
+
     // Iniciar MongoDB en memoria
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
 
-    // Conectar mongoose a la BD en memoria
+    // Conectar Mongoose
     await mongoose.connect(mongoUri);
-    console.log('✅ MongoDB en memoria iniciada para tests');
 });
 
-// Después de cada test
 afterEach(async () => {
-    // Limpiar todas las colecciones
+    // Limpiar datos después de cada test
     const collections = mongoose.connection.collections;
     for (const key in collections) {
-        await collections[key].deleteMany();
+        try {
+            await collections[key].deleteMany();
+        } catch (error) {
+            // Ignorar errores
+        }
     }
 });
 
-// Después de todos los tests
 afterAll(async () => {
-    // Desconectar y parar MongoDB en memoria
+    // Limpiar
     await mongoose.disconnect();
-    await mongoServer.stop();
-    console.log('✅ MongoDB en memoria detenida');
+    if (mongoServer) {
+        await mongoServer.stop();
+    }
 });
