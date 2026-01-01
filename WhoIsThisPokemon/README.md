@@ -68,7 +68,6 @@ WhoIsThisPokemon/
 ├── .env(.example)
 ├── src/
 │   ├── app.js
-│   ├── config/
 │   ├── controllers/
 │   ├── db/
 │   ├── middlewares/
@@ -86,11 +85,12 @@ WhoIsThisPokemon/
 
 ---
 
-### 4. Gestión de configuración
+### 4. Gestión de configuración (ACTUALIZADO)
 
-**Opción elegida: B - Configuración centralizada (recomendada)**
+Este proyecto está alineado con el backend principal (juego de fútbol):
 
-La app carga `.env` y reúne la configuración del proyecto en un único punto (vía config).
+- **No usamos un módulo de configuración centralizado**.
+- `src/app.js` lee directamente de **variables de entorno** (`process.env`).
 
 Variables esperadas:
 
@@ -109,19 +109,28 @@ SESSION_SECRET=tu-secret-aqui
 POKEMON_SOLUTION_START_DATE=2025-01-10
 ```
 
+Notas:
+- Las sesiones se guardan en Mongo con `connect-mongo`.
+- El TTL se configura como en el proyecto raíz: `ttl: 24 * 60 * 60`.
+
 ---
 
 ### 5. Especificación: rutas del sistema
 
-#### Rutas de API Pokémon
+#### Rutas de API Pokémon (CRUD)
 
 | Tipo | Método | Endpoint | Descripción | Autorización |
 |------|--------|----------|-------------|--------------|
 | API | GET | `/api/pokemon` | Obtener lista de Pokémon (paginado) | Pública |
-| API | GET | `/api/pokemon/:id` | Obtener Pokémon por id | Pública |
+| API | GET | `/api/pokemon/:id` | Obtener Pokémon por id (acepta `id` numérico o `_id`) | Pública |
 | API | POST | `/api/pokemon` | Crear Pokémon | Admin |
 | API | PUT | `/api/pokemon/:id` | Actualizar Pokémon | Admin |
 | API | DELETE | `/api/pokemon/:id` | Eliminar Pokémon | Admin |
+
+Query params útiles en listado:
+- `?page=1&limit=20`
+- `?search=bulb` (filtra por nombre)
+- `?type=Fire` (filtra si aparece en `type1` o `type2`)
 
 #### Rutas de juego
 
@@ -129,7 +138,7 @@ POKEMON_SOLUTION_START_DATE=2025-01-10
 |------|--------|----------|-------------|--------------|
 | API | GET | `/api/game/current` | Obtener número del juego actual | Pública |
 | API | GET | `/api/game/:gameNumber` | Info del juego | Pública |
-| API | GET | `/api/solution/:gameNumber` | Solución del día | Pública |
+| API | GET | `/api/solution/:gameNumber` | Solución del día (devuelve el Pokémon completo) | Pública |
 
 #### Rutas de autenticación
 
@@ -206,6 +215,309 @@ Campos:
 - `src/db/seeders/seedPokemon.js`: inserta los 1000 Pokémon.
 - `src/db/seeders/seedSolutions.js`: genera 365 soluciones a partir de `POKEMON_SOLUTION_START_DATE`.
 
+**Actualización importante:**
+- `seedPokemon.js` ahora es **idempotente** (borra la colección antes de insertar) para poder ejecutar `npm run seed` varias veces sin errores de duplicados.
+
+---
+
+## Milestone 3: Gestión de usuarios: autentificación y autorización
+
+Se ha aprovechado el sistema de usuarios del backend principal de WhoAreYa.
+
+- Cualquier usuario puede leer (GET) los datos públicos.
+- Solo un usuario con rol `admin` puede crear/editar/eliminar Pokémon.
+
+---
+
+## Milestone 4: API REST - CRUD de Pokémon
+
+Este milestone implementa una **API RESTful** para la entidad `Pokemon`, siguiendo el mismo patrón que el CRUD de `Player` del proyecto raíz:
+
+- Lecturas (**GET**) públicas para soportar el juego (sin login).
+- Escrituras (**POST/PUT/DELETE**) protegidas por sesión y rol `admin`.
+- Respuestas consistentes en JSON.
+- **Subida de imágenes** con multer (idéntico al sistema de jugadores).
+- **Validación robusta** en controladores con arrays de errores detallados.
+
+### 4.1. Endpoints CRUD
+
+#### GET `/api/pokemon`
+Lista paginada de Pokémon.
+
+Query params:
+- `page` (por defecto `1`)
+- `limit` (por defecto `20`)
+
+Filtros opcionales:
+- `search`: búsqueda por nombre (case-insensitive, con escape de regex)
+- `type`: filtra si coincide con `type1` o `type2` (case-insensitive exacto)
+
+Ejemplo:
+- `/api/pokemon?page=1&limit=10&type=Fire&search=char`
+
+**Mejoras de seguridad:**
+- Búsquedas con `escapeRegex()` para prevenir inyecciones en regex.
+- Filtros case-insensitive con coincidencia exacta para tipos.
+
+#### GET `/api/pokemon/:id`
+Obtiene un Pokémon por:
+- `id` numérico de pokedex (por ejemplo `25` → Pikachu), o
+- `_id` de MongoDB (ObjectId).
+
+**Búsqueda dual:** Si el parámetro es numérico, busca por `id`; si no, busca por `_id`.
+
+#### POST `/api/pokemon`
+Crea un nuevo Pokémon.
+
+- Requiere sesión + rol `admin`.
+- Soporta **multipart/form-data** para subir imagen.
+- Body (ejemplo):
+  - `id` (int, requerido)
+  - `name` (string, requerido, mínimo 2 caracteres)
+  - `type1` (string, requerido)
+  - `type2` (string, opcional)
+  - `imageUrl` (string, opcional)
+  - `image` (file, opcional) - imagen PNG/JPEG/GIF (máx 5MB)
+
+**Validaciones:**
+- ID numérico requerido y único.
+- Nombre mínimo 2 caracteres y único.
+- Verificación de duplicados por ID o nombre.
+- Si se sube imagen, se guarda automáticamente como `public/images/pokemon/{id}.png`.
+
+#### PUT `/api/pokemon/:id`
+Actualiza todos los campos de un Pokémon.
+
+- Requiere sesión + rol `admin`.
+- Soporta **multipart/form-data** para actualizar imagen.
+- Mismas validaciones que `POST`.
+- Permite actualizar imagen existente.
+
+**Búsqueda dual:** Acepta tanto `id` numérico como `_id` de MongoDB.
+
+#### DELETE `/api/pokemon/:id`
+Elimina un Pokémon.
+
+- Requiere sesión + rol `admin`.
+- **Búsqueda dual:** Acepta tanto `id` numérico como `_id` de MongoDB.
+
+### 4.2. Endpoints del juego (públicos, sin login)
+
+Estos endpoints soportan la mecánica del juego, igual que en el juego de fútbol:
+
+#### GET `/api/game/current`
+Obtiene el número del juego actual basado en la fecha.
+
+Respuesta:
+```json
+{
+  "success": true,
+  "data": {
+    "gameNumber": 5,
+    "date": "2025-01-15T00:00:00.000Z"
+  }
+}
+```
+
+#### GET `/api/game/:gameNumber`
+Información sobre un juego específico.
+
+Respuesta:
+```json
+{
+  "success": true,
+  "data": {
+    "gameNumber": 1,
+    "date": "2025-01-10T00:00:00.000Z",
+    "hasSolution": true
+  }
+}
+```
+
+#### GET `/api/solution/:gameNumber`
+Devuelve la solución del día (IDs del Pokémon).
+
+Respuesta:
+```json
+{
+  "success": true,
+  "data": {
+    "pokemonId": 25,
+    "_id": "507f1f77bcf86cd799439011"
+  }
+}
+```
+
+**Nota:** Devuelve tanto el `pokemonId` numérico como el `_id` de MongoDB, igual que el sistema de jugadores.
+
+### 4.3. Formato de respuestas
+
+Éxito (ejemplo):
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 25,
+    "name": "pikachu",
+    "type1": "Electric",
+    "type2": null,
+    "_id": "507f1f77bcf86cd799439011"
+  },
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 1000,
+    "pages": 50
+  },
+  "message": "Pokémon obtenido exitosamente"
+}
+```
+
+Error con validación detallada (ejemplo):
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Datos inválidos",
+    "details": [
+      "El ID del Pokémon es requerido",
+      "El nombre debe tener al menos 2 caracteres",
+      "El tipo 1 es requerido"
+    ]
+  }
+}
+```
+
+### 4.4. Códigos de estado usados
+
+- `200` OK (lectura exitosa)
+- `201` Created (creación exitosa)
+- `400` Bad Request (validación fallida, duplicados)
+- `401` Unauthorized (no autenticado)
+- `403` Forbidden (no admin)
+- `404` Not Found (recurso no encontrado)
+- `500` Internal Server Error (error del servidor)
+
+### 4.5. Subida de imágenes con Multer
+
+Similar al sistema de jugadores, se configuró **Multer** para manejar la subida de imágenes:
+
+**Configuración** (`src/config/multer.js`):
+- Destino: `public/images/pokemon/`
+- Nombre: `{pokemonId}.png`
+- Tipos permitidos: JPEG, PNG, GIF
+- Tamaño máximo: 5MB
+
+**Uso en rutas:**
+```javascript
+router.post('/pokemon', isAuthenticated, isAdmin, upload.single('image'), pokemonController.createPokemon);
+router.put('/pokemon/:id', isAuthenticated, isAdmin, upload.single('image'), pokemonController.updatePokemon);
+```
+
+**Flujo:**
+1. El middleware `upload.single('image')` procesa la imagen.
+2. Se guarda temporalmente con el ID del body.
+3. El controlador renombra al ID final después de crear/actualizar.
+
+### 4.6. Arquitectura de controladores
+
+Los controladores (`src/controllers/pokemonController.js` y `pokemonGameController.js`) están **100% alineados** con los controladores de jugadores:
+
+**Características compartidas:**
+- ✅ Función `escapeRegex()` para búsquedas seguras
+- ✅ Validación robusta con arrays de errores
+- ✅ Manejo de imágenes con `req.file`
+- ✅ Búsqueda dual por ID numérico o MongoDB `_id`
+- ✅ Verificación de duplicados antes de crear/actualizar
+- ✅ Manejo consistente de errores con `.catch(() => null)`
+- ✅ Formato de respuestas idéntico
+
+**Ejemplo de validación en controlador:**
+```javascript
+const errors = [];
+
+if (!id) {
+  errors.push('El ID del Pokémon es requerido');
+} else if (typeof id !== 'number' && isNaN(id)) {
+  errors.push('El ID debe ser un número');
+}
+
+if (!name) {
+  errors.push('El nombre es requerido');
+} else if (name.length < 2) {
+  errors.push('El nombre debe tener al menos 2 caracteres');
+}
+
+if (errors.length > 0) {
+  return res.status(400).json({
+    success: false,
+    error: {
+      code: 'VALIDATION_ERROR',
+      message: 'Datos inválidos',
+      details: errors
+    }
+  });
+}
+```
+
+### 4.7. Frontend: `loaders.js` usando la API
+
+Siguiendo la solución del juego de fútbol, el frontend se apoya en `fetchJSON()` del loader:
+
+- Para `fetchJSON('pokedex-1-1000')` se hace una llamada a:
+  - `GET /api/pokemon?limit=1000`
+
+Y se **normaliza** al formato esperado por el frontend:
+- `pokemonId` → `id`
+- `pokemonName` → `name`
+- `type1` / `type2`
+
+La solución del día se obtiene dinámicamente:
+- `GET /api/game/current` → obtiene el número del juego
+- `GET /api/solution/:gameNumber` → obtiene el Pokémon solución
+
+### 4.8. Cambios importantes (Actualización 2026-01-01)
+
+**Refactorización completa para consistencia con playerController:**
+
+1. **Controladores actualizados:**
+   - `pokemonController.js`: Ahora idéntico en estructura a `playerController.js`
+   - `pokemonGameController.js`: Ahora idéntico en estructura a `gameController.js`
+   - Función `escapeRegex()` añadida para seguridad en búsquedas
+   - Validación robusta con arrays de errores detallados
+   - Manejo de subida de imágenes con `req.file`
+
+2. **Rutas actualizadas:**
+   - `pokemonRoutes.js`: Añadido middleware `upload.single('image')` en POST/PUT
+   - `pokemonGameRoutes.js`: Formato de comentarios consistente
+   - Mismo orden y estructura que las rutas de jugadores
+
+3. **Configuración:**
+   - `app.js`: Estructura reorganizada para ser idéntica al proyecto principal
+   - Rutas API primero, luego autenticación (sin prefijo `/auth`)
+   - Manejo de errores consistente con código `INTERNAL_SERVER_ERROR`
+   - `src/config/multer.js`: Configuración para subida de imágenes de Pokémon
+
+4. **Dependencias:**
+   - Se usa `multer` del proyecto raíz (no duplicado en package.json)
+   - Todas las dependencias compartidas con el proyecto principal
+
+**Razonamiento:**
+
+- **Coherencia total:** Ambos sistemas (jugadores y Pokémon) son ahora idénticos en estructura.
+- **Mantenibilidad:** Cambios en uno se pueden replicar fácilmente al otro.
+- **Seguridad:** Escape de regex, validaciones robustas, protección contra inyecciones.
+- **Escalabilidad:** Patrones probados y consistentes facilitan el crecimiento del proyecto.
+
+**Pruebas:**
+- ✅ CRUD completo verificado con `test-crud.js`
+- ✅ Todas las operaciones (CREATE, READ, UPDATE, DELETE) funcionando
+- ✅ Búsquedas con regex y filtros por tipo funcionando
+- ✅ Manejo dual de IDs (numérico y MongoDB) funcionando
+
 ---
 
 ## Instalación y ejecución (Windows / cmd)
@@ -221,6 +533,12 @@ Crea `.env` a partir de `.env.example` (en cmd no existe `cp`):
 
 ```bat
 copy .env.example .env
+```
+
+Poblar la BD:
+
+```bat
+npm run seed
 ```
 
 Arranque:
@@ -242,11 +560,3 @@ Tras ejecutar los seeders:
 - DB `pokemon`
 - `pokemons`: 1000 docs
 - `pokemonsolutions`: 365 docs
-
----
-
-## Milestone 3: Gestión de usuarios: autentificación y autorización
-
-Se ha aprovechado el sistema de usuarios del backend principal de WhoAreYa.
-
----

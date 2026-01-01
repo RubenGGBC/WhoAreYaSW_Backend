@@ -1,52 +1,44 @@
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
-const config = require('./config');
 const authRoutes = require('./routes/authRoutes');
+const path = require('path');
 
 const app = express();
 
-// Middlewares de parseo
+// Configurar EJS como motor de vistas
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views'));
+
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Gestión de sesiones con MongoDB
+app.use(express.static(path.join(__dirname, '../public')));
 app.use(session({
-  secret: config.sessionSecret,
+  secret: process.env.SESSION_SECRET || '9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617',
   resave: false,
   saveUninitialized: true,
   store: new MongoStore({
-    mongoUrl: config.mongoUri,
-    ttl: config.sessionMaxAge / 1000
-  }),
-  cookie: {
-    secure: false,
-    httpOnly: true,
-    maxAge: config.sessionMaxAge
-  }
+    mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/pokemon',
+    ttl: 24 * 60 * 60
+  })
 }));
 
-// Rutas
-app.use('/auth', authRoutes);
-// app.use('/api', pokemonRoutes);
-// app.use('/api', pokemonGameRoutes);
+// Rutas API (primero para evitar conflictos)
+app.use('/api', require('./routes/pokemonRoutes'));
+app.use('/api', require('./routes/pokemonGameRoutes'));
 
-// Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Servidor Pokemon está activo'
-  });
-});
+// Rutas de autenticación (sin prefijo)
+app.use('/', authRoutes);
 
-// Manejo global de errores
+// Manejo de errores
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error(err.stack);
   res.status(500).json({
     success: false,
     error: {
-      code: 'SERVER_ERROR',
-      message: err.message || 'Error interno del servidor'
+      code: 'INTERNAL_SERVER_ERROR',
+      message: err.message
     }
   });
 });

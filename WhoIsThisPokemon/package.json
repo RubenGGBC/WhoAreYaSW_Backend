@@ -9,7 +9,6 @@
     "fetch-images": "node src/scripts/fetchPokemonImages.js",
     "seed": "node src/db/seeders/seedPokemon.js && node src/db/seeders/seedSolutions.js"
   },
-  "keywords": ["pokemon", "api", "backend"],
   "author": "",
   "license": "ISC",
   "dependencies": {
