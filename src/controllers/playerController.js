@@ -109,60 +109,6 @@ exports.getPlayersById = async (req, res) => {
 exports.createPlayer = async (req, res) => {
     try {
         const { id, name, birthDate, nationality, teamId, leagueId, position, number, imageUrl } = req.body;
-        const errors = [];
-
-        // Validar id
-        if (!id) {
-            errors.push('El ID del jugador es requerido');
-        } else if (typeof id !== 'number' && isNaN(id)) {
-            errors.push('El ID debe ser un número');
-        }
-
-        // Validar nombre
-        if (!name) {
-            errors.push('El nombre es requerido');
-        } else if (name.length < 2) {
-            errors.push('El nombre debe tener al menos 2 caracteres');
-        }
-
-        // Validar posición
-        if (!position) {
-            errors.push('La posición es requerida');
-        } else if (!['DF', 'MF', 'FW', 'GK'].includes(position)) {
-            errors.push('Posición inválida. Debe ser DF, MF, FW o GK');
-        }
-
-        // Validar número (opcional)
-        if (number && isNaN(number)) {
-            errors.push('El número debe ser numérico');
-        }
-
-        // Validar birthDate (opcional)
-        if (birthDate && isNaN(Date.parse(birthDate))) {
-            errors.push('Formato de fecha inválido');
-        }
-
-        // Validar teamId (opcional)
-        if (teamId && isNaN(teamId)) {
-            errors.push('El ID del equipo debe ser un número');
-        }
-
-        // Validar leagueId (opcional)
-        if (leagueId && isNaN(leagueId)) {
-            errors.push('El ID de la liga debe ser un número');
-        }
-
-        // Retornar errores si existen
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                error: {
-                    code: 'VALIDATION_ERROR',
-                    message: 'Datos inválidos',
-                    details: errors
-                }
-            });
-        }
 
         // Verificar si el jugador ya existe
         const existingPlayer = await Player.findOne({ id });
@@ -210,60 +156,6 @@ exports.createPlayer = async (req, res) => {
 exports.updatePlayer = async (req, res) => {
     try {
         const { id, name, birthDate, nationality, teamId, leagueId, position, number, imageUrl } = req.body;
-        const errors = [];
-
-        // Validar id
-        if (!id) {
-            errors.push('El ID del jugador es requerido');
-        } else if (typeof id !== 'number' && isNaN(id)) {
-            errors.push('El ID debe ser un número');
-        }
-
-        // Validar nombre
-        if (!name) {
-            errors.push('El nombre es requerido');
-        } else if (name.length < 2) {
-            errors.push('El nombre debe tener al menos 2 caracteres');
-        }
-
-        // Validar posición
-        if (!position) {
-            errors.push('La posición es requerida');
-        } else if (!['DF', 'MF', 'FW', 'GK'].includes(position)) {
-            errors.push('Posición inválida. Debe ser DF, MF, FW o GK');
-        }
-
-        // Validar número (opcional)
-        if (number && isNaN(number)) {
-            errors.push('El número debe ser numérico');
-        }
-
-        // Validar birthDate (opcional)
-        if (birthDate && isNaN(Date.parse(birthDate))) {
-            errors.push('Formato de fecha inválido');
-        }
-
-        // Validar teamId (opcional)
-        if (teamId && isNaN(teamId)) {
-            errors.push('El ID del equipo debe ser un número');
-        }
-
-        // Validar leagueId (opcional)
-        if (leagueId && isNaN(leagueId)) {
-            errors.push('El ID de la liga debe ser un número');
-        }
-
-        // Retornar errores si existen
-        if (errors.length > 0) {
-            return res.status(400).json({
-                success: false,
-                error: {
-                    code: 'VALIDATION_ERROR',
-                    message: 'Datos inválidos',
-                    details: errors
-                }
-            });
-        }
 
         // Verificar si el jugador existe
         const player = await Player.findById(req.params.id);
