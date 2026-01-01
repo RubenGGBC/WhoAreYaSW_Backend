@@ -23,7 +23,8 @@ describe('Rutas de Auth ', () => {
             .expect(201);
 
         expect(response.body.success).toBe(true);
-        expect(response.body.data.email).toBe('register@test.com');
+        expect(response.body.data.token).toBeDefined();
+        expect(response.body.data.user.email).toBe('register@test.com');
     });
 
     test('POST /register - Debe fallar si email existe', async () => {
@@ -86,7 +87,8 @@ describe('Rutas de Auth ', () => {
             .expect(200);
 
         expect(response.body.success).toBe(true);
-        expect(response.body.data.email).toBe('login@test.com');
+        expect(response.body.data.token).toBeDefined();
+        expect(response.body.data.user.email).toBe('login@test.com');
     });
 
     test('POST /login - Debe fallar con credenciales incorrectas', async () => {

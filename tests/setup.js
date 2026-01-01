@@ -10,6 +10,8 @@ beforeAll(async () => {
     process.env.GITHUB_CLIENT_ID = 'test';
     process.env.GITHUB_CLIENT_SECRET = 'test';
     process.env.GITHUB_CALLBACK_URL = 'http://test.com';
+    process.env.JWT_SECRET = 'test-jwt-secret';
+    process.env.JWT_REFRESH_SECRET = 'test-jwt-refresh-secret';
 
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
