@@ -1,5 +1,3 @@
-// Lógica para el login
-
 window.onload = function () {
   const form = document.getElementById('loginForm');
   const submitBtn = document.getElementById('submitBtn');
@@ -25,11 +23,12 @@ window.onload = function () {
       const data = await response.json().catch(() => null);
 
       if (response.ok && data.success) {
-        if (data.data) {
-          localStorage.setItem('userName', data.data.name);
-          localStorage.setItem('userRole', data.data.role);
+        if (data.data && data.data.token) {
+          localStorage.setItem('token', data.data.token);
+          localStorage.setItem('userName', data.data.user.name);
+          localStorage.setItem('userRole', data.data.user.role);
 
-          if (data.data.role === 'admin'){
+          if (data.data.user.role === 'admin'){
               window.location.href = '/admin';
           }
           else{

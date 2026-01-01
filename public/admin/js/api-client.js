@@ -1,6 +1,17 @@
-// Cliente para llamar a la API REST desde el navegador
-
 const API_BASE = '/api';
+
+function getAuthHeaders() {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
 
 function buildQueryParams(filters = {}) {
   const params = new URLSearchParams();
@@ -30,8 +41,6 @@ function buildQueryParams(filters = {}) {
 }
 
 async function handleJsonResponse(response, defaultErrorMessage) {
-
-    //Si no está autenticado, redirigir al login
   if (response.status === 401) {
     window.location.href = '/login';
     return;
@@ -44,28 +53,29 @@ async function handleJsonResponse(response, defaultErrorMessage) {
   return await response.json();
 }
 
-// Cliente API. Métodos para interactuar con la API REST con fetch.
 export const API = {
 
   async getPlayers(filters = {}) {
     const params = buildQueryParams(filters);
     const qs = params.toString();
 
-    const response = await fetch(`/api/players${qs ? `?${qs}` : ''}`);
+    const response = await fetch(`/api/players${qs ? `?${qs}` : ''}`, {
+      headers: getAuthHeaders()
+    });
     return await handleJsonResponse(response, 'Error al obtener jugadores');
   },
 
   async getPlayerById(id) {
-    const response = await fetch(`/api/players/${id}`);
+    const response = await fetch(`/api/players/${id}`, {
+      headers: getAuthHeaders()
+    });
     return await handleJsonResponse(response, 'Jugador no encontrado');
   },
 
   async createPlayer(playerData) {
     const response = await fetch(`/api/players`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(playerData)
     });
 
@@ -73,9 +83,15 @@ export const API = {
   },
 
   async createPlayerWithImage(formData) {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`/api/players`, {
       method: 'POST',
-      // No establecer Content-Type para que el navegador lo establezca automáticamente con boundary
+      headers,
       body: formData
     });
 
@@ -85,9 +101,7 @@ export const API = {
   async updatePlayer(id, playerData) {
     const response = await fetch(`/api/players/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(playerData)
     });
 
@@ -95,9 +109,15 @@ export const API = {
   },
 
   async updatePlayerWithImage(id, formData) {
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(`/api/players/${id}`, {
       method: 'PUT',
-      // No establecer Content-Type para que el navegador lo establezca automáticamente con boundary
+      headers,
       body: formData
     });
 
@@ -106,19 +126,24 @@ export const API = {
 
   async deletePlayer(id) {
     const response = await fetch(`/api/players/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders()
     });
 
     return await handleJsonResponse(response, 'Error al eliminar jugador');
   },
 
   async getTeams() {
-    const response = await fetch(`/api/teams`);
+    const response = await fetch(`/api/teams`, {
+      headers: getAuthHeaders()
+    });
     return await handleJsonResponse(response, 'Error al obtener equipos');
   },
 
   async getLeagues() {
-    const response = await fetch(`/api/leagues`);
+    const response = await fetch(`/api/leagues`, {
+      headers: getAuthHeaders()
+    });
     return await handleJsonResponse(response, 'Error al obtener ligas');
   }
 };

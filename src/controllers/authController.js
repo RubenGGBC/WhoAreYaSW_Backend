@@ -1,6 +1,6 @@
 const User = require('../models/User');
+const { generateAccessToken } = require('../utils/jwt');
 
-// GET - Renderizar vista de registro
 exports.getRegisterView = (req, res) => {
     res.render('auth/register', {
         title: 'Registro',
@@ -8,9 +8,7 @@ exports.getRegisterView = (req, res) => {
     });
 };
 
-// GET - Renderizar vista de login
 exports.getLoginView = (req, res) => {
-    // Obtener mensaje de error de query string si existe
     const queryError = req.query.error;
     let errorMessage = null;
 
@@ -32,7 +30,7 @@ exports.getLoginView = (req, res) => {
     res.render('auth/login', {
         title: 'Iniciar Sesión',
         error: null,
-        queryError: errorMessage, // Error de OAuth desde query string
+        queryError: errorMessage,
         success: req.query.success || null
     });
 };
@@ -41,7 +39,6 @@ exports.register = async (req, res) => {
     try {
         const { name, lastName, email, password, confirmPassword } = req.body;
 
-        // Validar que las contraseñas coincidan
         if (password !== confirmPassword) {
             return res.status(400).json({
                 success: false,
@@ -52,7 +49,6 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Verificar que el email no existe
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({
@@ -64,22 +60,29 @@ exports.register = async (req, res) => {
             });
         }
 
-        // Contar usuarios para determinar si es admin, si es el primero entonces es un admin
         const userCount = await User.countDocuments();
         const role = userCount === 0 ? 'admin' : 'user';
-        // Crear nuevo usuario
+        
         const newUser = new User({ name, lastName, email, password, role });
         await newUser.save();
-        req.session.userId = newUser._id;
-        req.session.userRole = newUser.role;
+        
+        const token = generateAccessToken({
+            userId: newUser._id,
+            email: newUser.email,
+            role: newUser.role
+        });
+        
         res.status(201).json({
             success: true,
             data: {
-                id: newUser._id,
-                name: newUser.name,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                role: newUser.role
+                token,
+                user: {
+                    id: newUser._id,
+                    name: newUser.name,
+                    lastName: newUser.lastName,
+                    email: newUser.email,
+                    role: newUser.role
+                }
             },
             message: role === 'admin' ? 'Primer usuario registrado como admin' : 'Usuario registrado exitosamente'
         });
@@ -95,7 +98,6 @@ exports.register = async (req, res) => {
 
 };
 exports.login = async (req, res) => {
-    //Obtenemos el email y la contraseña y buscamos el usuario en la DB
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -108,7 +110,6 @@ exports.login = async (req, res) => {
                 }
             });
         }
-        //Comparamos la contraseña de ese usuario
         const CorrectPass = await user.comparePassword(password);
         if(!CorrectPass){
             return res.status(401).json({
@@ -119,19 +120,26 @@ exports.login = async (req, res) => {
                 }
             });
         }
-        //Guardamos la sesión y respondemos
-        req.session.userId = user._id;
-        req.session.userRole = user.role;
+        
+        const token = generateAccessToken({
+            userId: user._id,
+            email: user.email,
+            role: user.role
+        });
+        
         res.status(200).json({
             success: true,
             data: {
-                id: user._id,
-                name: user.name,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role
+                token,
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    lastName: user.lastName,
+                    email: user.email,
+                    role: user.role
+                }
             },
-            message: 'Sesión iniciada exitosamente'
+            message: 'Login exitoso'
         });
     } catch (error) {
         res.status(500).json({
