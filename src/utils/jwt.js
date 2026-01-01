@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const generateAccessToken = (payload) => {
     return jwt.sign(
         payload,
-        process.env.JWT_SECRET,
+        process.env.JWT_SECRET || 'mltX2IFGvPV9gE5LUywKnizpC6HNQsMZJqA714WBY3bouRjkdeaSfxh0cTD8Or',
         { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 };
@@ -11,14 +11,14 @@ const generateAccessToken = (payload) => {
 const generateRefreshToken = (payload) => {
     return jwt.sign(
         payload,
-        process.env.JWT_REFRESH_SECRET,
+        process.env.JWT_REFRESH_SECRET || 'MJjW0l3hR8bdsmPpXxSnr2NVI7aTBzkwFv1itgA5ODQEL9UYqKefCG4yH6oZuc',
         { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
     );
 };
 
 const verifyAccessToken = (token) => {
     try {
-        return jwt.verify(token, process.env.JWT_SECRET);
+        return jwt.verify(token, process.env.JWT_SECRET || 'mltX2IFGvPV9gE5LUywKnizpC6HNQsMZJqA714WBY3bouRjkdeaSfxh0cTD8Or');
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
             throw new Error('TOKEN_EXPIRED');
@@ -32,7 +32,7 @@ const verifyAccessToken = (token) => {
 
 const verifyRefreshToken = (token) => {
     try {
-        return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+        return jwt.verify(token, process.env.JWT_REFRESH_SECRET || 'MJjW0l3hR8bdsmPpXxSnr2NVI7aTBzkwFv1itgA5ODQEL9UYqKefCG4yH6oZuc');
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
             throw new Error('REFRESH_TOKEN_EXPIRED');
