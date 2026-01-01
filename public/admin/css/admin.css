@@ -623,3 +623,25 @@ body {
   object-fit: contain;
   flex: 0 0 18px;
 }
+
+.player-league {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-league .league-badge {
+  width: 20px;
+  height: 14px;
+  object-fit: contain;
+  flex: 0 0 20px;
+}
+
+.league-name {
+  font-size: 0.85rem;
+  color: #3498db;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  display: block;
+}
+

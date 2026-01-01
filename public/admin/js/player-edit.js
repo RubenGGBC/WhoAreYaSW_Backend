@@ -3,9 +3,19 @@
 import { API } from './api-client.js';
 import { createCustomSelect } from './custom-select.js';
 
+// Map de códigos de liga a nombres legibles
+const LEAGUE_CODE_MAP = {
+  'es1': 'La Liga',
+  'en1': 'Premier League',
+  'de1': 'Bundesliga',
+  'it1': 'Serie A',
+  'fr1': 'Ligue 1'
+};
+
 let playerId = null;
 let teamSelect = null;
 let leagueSelect = null;
+let allLeagues = [];
 
 // Cargar datos al iniciar la página
 window.onload = async () => {
@@ -30,6 +40,7 @@ async function loadFormData() {
 
   const teams = teamsResult?.data || [];
   const leagues = leaguesResult?.data || [];
+  allLeagues = leagues;
 
   // Crear opciones para equipos
   const teamOptions = teams.map(team => ({
@@ -41,8 +52,8 @@ async function loadFormData() {
   // Crear opciones para ligas
   const leagueOptions = leagues.map(league => ({
     value: String(league.id),
-    text: league.name,
-    imageUrl: league.flagUrl || `/images/leagues/${league.id}.png`
+    text: LEAGUE_CODE_MAP[league.code] || league.name,
+    imageUrl: league.flagUrl || `/images/leagues/${league.code}.png`
   }));
 
   // Crear custom selects
@@ -59,6 +70,12 @@ async function loadFormData() {
     'Selecciona una liga',
     (option) => option.imageUrl
   );
+
+  // Agregar listener para mostrar el nombre de la liga
+  const leagueSelectElement = document.querySelector('#league-select-container .custom-select');
+  if (leagueSelectElement) {
+    leagueSelectElement.addEventListener('change', updateLeagueNameDisplay);
+  }
 }
 
 //cargar datos del jugador a editar (feedback de Copilot)
@@ -100,8 +117,30 @@ async function loadPlayerData() {
     // Mostrar formulario y ocultar loading
     loading.style.display = 'none';
     form.style.display = 'block';
+
+    // Mostrar nombre de la liga si hay una seleccionada
+    updateLeagueNameDisplay();
   } catch (error) {
     console.error('Error al cargar jugador:', error);
+  }
+}
+
+// Función para actualizar y mostrar el nombre legible de la liga
+function updateLeagueNameDisplay() {
+  const leagueId = leagueSelect?.getValue();
+  const leagueNameElement = document.getElementById('league-name');
+  
+  if (!leagueNameElement) return;
+
+  if (!leagueId) {
+    leagueNameElement.textContent = '';
+    return;
+  }
+
+  const league = allLeagues.find(l => String(l.id) === String(leagueId));
+  if (league) {
+    const leagueFullName = LEAGUE_CODE_MAP[league.code] || league.name;
+    leagueNameElement.textContent = leagueFullName;
   }
 }
 

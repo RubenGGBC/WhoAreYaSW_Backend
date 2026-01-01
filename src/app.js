@@ -1,19 +1,16 @@
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
+const passport = require('passport');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
-const oauthRoutes = require('./routes/oauthRoutes');
-const passport = require('passport');
 const path = require('path');
 
 const app = express();
 
-// Configurar EJS como motor de vistas
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
-// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../public')));
@@ -27,24 +24,17 @@ app.use(session({
   })
 }));
 
-// INICIALIZAR PASSPORT
 app.use(passport.initialize());
 app.use(passport.session());
-require('./config/passport')(passport); // Cargar configuración
+require('./config/passport')(passport);
 
-// Rutas API (primero para evitar conflictos)
 app.use('/api', require('./routes/playerRoutes'));
 app.use('/api', require('./routes/gameRoutes'));
-// app.use('/api', require('./routes/statsRoutes'));
 
-// Rutas de administración
 app.use('/admin', adminRoutes);
 
-// Rutas de autentificación (al final, sin prefijo)
 app.use('/', authRoutes);
-app.use('/', oauthRoutes);
 
-// Manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({

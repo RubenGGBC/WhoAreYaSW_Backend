@@ -3,6 +3,15 @@
 import { API } from './api-client.js';
 import { createCustomSelect } from './custom-select.js';
 
+// Map de códigos de liga a nombres legibles
+const LEAGUE_CODE_MAP = {
+  'es1': 'La Liga',
+  'en1': 'Premier League',
+  'de1': 'Bundesliga',
+  'it1': 'Serie A',
+  'fr1': 'Ligue 1'
+};
+
 let teamSelect = null;
 let leagueSelect = null;
 
@@ -38,8 +47,8 @@ async function loadFormData() {
   // Crear opciones para ligas
   const leagueOptions = leagues.map(league => ({
     value: String(league.id),
-    text: league.name,
-    imageUrl: league.flagUrl || `/images/leagues/${league.id}.png`
+    text: LEAGUE_CODE_MAP[league.code] || league.name,
+    imageUrl: league.flagUrl || `/images/leagues/${league.code}.png`
   }));
 
   // Crear custom selects

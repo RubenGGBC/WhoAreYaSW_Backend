@@ -199,6 +199,7 @@ function displayPlayers(players) {
     let teamName = 'Sin equipo';
     let leagueName = 'Sin liga';
     let teamLogoUrl = '';
+    let leagueFlagUrl = '';
 
     if (allTeams && allTeams.length > 0 && player.teamId) {
       const team = allTeams.find(t => t.id === player.teamId);
@@ -210,7 +211,10 @@ function displayPlayers(players) {
 
     if (allLeagues && allLeagues.length > 0 && player.leagueId) {
       const league = allLeagues.find(l => l.id === player.leagueId);
-      if (league) leagueName = league.name;
+      if (league) {
+        leagueName = league.name;
+        leagueFlagUrl = league.flagUrl || `/images/leagues/${league.code}.png`;
+      }
     }
 
     // Crear tarjeta de jugador (ayudado por Copilot)
@@ -227,7 +231,9 @@ function displayPlayers(players) {
           ${teamLogoUrl ? `<img class="team-badge" data-team-id="${player.teamId}" src="${teamLogoUrl}" alt="${teamName}">` : ''}
           <span>${teamName}</span>
         </p>
-        <p class="player-league">${leagueName}</p>
+        <p class="player-league">
+          ${leagueFlagUrl ? `<img class="league-badge" data-league-id="${player.leagueId}" src="${leagueFlagUrl}" alt="${leagueName}">` : ''}
+        </p>
         <p class="player-nationality">${player.nationality || 'Sin nacionalidad'}</p>
       </div>
       <div class="player-actions">
@@ -247,6 +253,14 @@ function displayPlayers(players) {
     const teamBadge = card.querySelector('.team-badge');
     if (teamBadge) {
       teamBadge.addEventListener('error', function() {
+        this.style.display = 'none';
+      }, { once: true });
+    }
+
+    // Fallback del logo de la liga
+    const leagueBadge = card.querySelector('.league-badge');
+    if (leagueBadge) {
+      leagueBadge.addEventListener('error', function() {
         this.style.display = 'none';
       }, { once: true });
     }
