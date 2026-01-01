@@ -23,6 +23,9 @@ function capitalizeType(type) {
         const pokedexContent = await fs.readFile(pokedexPath, 'utf8');
         const pokedexData = JSON.parse(pokedexContent);
 
+        console.log('Limpiando pokémon previos...');
+        await Pokemon.deleteMany({});
+
         console.log(`Preparando ${pokedexData.length} pokémon para insertar...`);
 
         const pokemonToInsert = pokedexData.map((poke) => {

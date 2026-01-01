@@ -1,4 +1,10 @@
-// Rutas de Juego Pokemon - A implementar en Milestone 4
-// GET /api/game/current - Número de juego actual (público)
-// GET /api/game/:gameNumber - Info del juego (público)
-// GET /api/solution/:gameNumber - Solución del día (público)
+const express = require('express');
+const router = express.Router();
+const pokemonGameController = require('../controllers/pokemonGameController');
+
+// Rutas públicas (sin autenticación)
+router.get('/game/current', pokemonGameController.getCurrentGameNumber);
+router.get('/game/:gameNumber', pokemonGameController.getGameInfo);
+router.get('/solution/:gameNumber', pokemonGameController.getSolution);
+
+module.exports = router;
