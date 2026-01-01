@@ -5,7 +5,6 @@ const oauthController = require('../controllers/oauthController');
 
 // Rutas públicas de OAuth
 
-// ===== GOOGLE =====
 router.get('/auth/google',
     passport.authenticate('google', {
         scope: ['profile', 'email'],
@@ -21,7 +20,6 @@ router.get('/auth/google/callback',
     oauthController.oauthSuccess
 );
 
-// ===== GITHUB =====
 router.get('/auth/github',
     passport.authenticate('github', {
         scope: ['user:email']
@@ -36,7 +34,6 @@ router.get('/auth/github/callback',
     oauthController.oauthSuccess
 );
 
-// ===== LOGOUT =====
 router.get('/auth/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) {

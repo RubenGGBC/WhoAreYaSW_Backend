@@ -1,9 +1,7 @@
-// src/routes/oauthRoutes.js
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
 
-// ===== GOOGLE OAUTH =====
 router.get('/auth/google',
     passport.authenticate('google', {
         scope: ['profile', 'email'],
@@ -37,7 +35,6 @@ router.get('/auth/google/callback',
     }
 );
 
-// ===== GITHUB OAUTH =====
 router.get('/auth/github',
     passport.authenticate('github', {
         scope: ['user:email']
@@ -70,7 +67,6 @@ router.get('/auth/github/callback',
     }
 );
 
-// ===== LOGOUT =====
 router.get('/auth/logout', (req, res) => {
     req.logout((err) => {
         if (err) {
