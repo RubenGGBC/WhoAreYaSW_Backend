@@ -2,18 +2,7 @@ const User = require('../models/User');
 
 exports.register = async (req, res) => {
     try {
-        const { name, lastName, email, password, confirmPassword } = req.body;
-        
-        // Validar que las contraseñas coincidan
-        if (password !== confirmPassword) {
-            return res.status(400).json({
-                success: false,
-                error: {
-                    code: 'PASSWORD_MISMATCH',
-                    message: 'Las contraseñas no coinciden'
-                }
-            });
-        }
+        const { name, lastName, email, password } = req.body;
 
         // Verificar que el email no existe
         const existingUser = await User.findOne({ email });
