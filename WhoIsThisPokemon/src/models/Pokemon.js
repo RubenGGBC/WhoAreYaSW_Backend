@@ -30,6 +30,10 @@ const pokemonSchema = new mongoose.Schema({
             'Dragon', 'Dark', 'Steel', 'Fairy'
         ]
     },
+    weight: {
+        type: Number,
+        required: true
+    },
     imageUrl: {
         type: String,
         required: true

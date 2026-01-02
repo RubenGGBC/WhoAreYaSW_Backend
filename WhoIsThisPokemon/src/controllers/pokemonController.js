@@ -165,7 +165,7 @@ exports.createPokemon = async (req, res) => {
       name,
       type1,
       type2,
-      imageUrl
+      imageUrl: imageUrl || `/images/pokemon/${id}.png`
     });
 
     await newPokemon.save();
@@ -285,7 +285,7 @@ exports.updatePokemon = async (req, res) => {
         name,
         type1,
         type2,
-        imageUrl
+        imageUrl: imageUrl || pokemon.imageUrl || `/images/pokemon/${id}.png`
       },
       { new: true, runValidators: true }
     );

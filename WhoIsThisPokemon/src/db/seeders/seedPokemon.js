@@ -1,7 +1,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../../../.env') });
 
 const Pokemon = require('../../models/Pokemon');
 const { connectDB, mongoose } = require('../connection');
@@ -30,14 +30,15 @@ function capitalizeType(type) {
 
         const pokemonToInsert = pokedexData.map((poke) => {
             const type1 = capitalizeType(poke.type1);
-            const type2Cap = capitalizeType(poke.type2);
-            const type2 = type2Cap && type2Cap !== type1 ? type2Cap : undefined;
+            const type2Cap = capitalizeType(poke.type2) || type1;
+            const type2 = type2Cap; // siempre present
 
             return {
                 id: poke.pokemonId,
                 name: poke.pokemonName,
                 type1,
-                ...(type2 ? { type2 } : {}),
+                type2,
+                weight: typeof poke.weight === 'number' ? poke.weight : parseInt(poke.weight, 10) || 0,
                 imageUrl: `images/pokemon/${poke.pokemonId}.png`
             };
         });

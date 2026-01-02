@@ -1,1 +1,59 @@
-<!--dashboard.ejs-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+  <%- include('../partials/admin-header', { page: 'dashboard', user: user }) %>
+
+  <main class="admin-main">
+    <div class="container">
+      <h2>Gestión de Pokémon</h2>
+
+      <!-- Feedback del cliente (se muestra/oculta con JS) -->
+      <div id="admin-message" class="alert" style="display:none;"></div>
+
+      <!-- Mensajes flash (si los hay) -->
+      <% if (typeof message !== 'undefined' && message) { %>
+        <div class="alert alert-<%= message.type %>">
+          <%= message.text %>
+        </div>
+      <% } %>
+
+      <div class="toolbar">
+        <div class="search-bar">
+          <input type="text" id="search" placeholder="Buscar Pokémon...">
+          <select id="type-filter">
+            <option value="">Todos los tipos</option>
+          </select>
+          <button id="filter-btn" class="btn btn-secondary">Filtrar</button>
+        </div>
+        <a href="/admin/pokemon/new" class="btn btn-primary">+ Nuevo Pokémon</a>
+      </div>
+
+      <!-- Loading spinner -->
+      <div id="loading" class="loading">
+        Cargando Pokémon...
+      </div>
+
+      <div class="players-grid" id="pokemon-list" style="display: none;">
+        <!-- Los Pokémon se cargarán dinámicamente por js -->
+      </div>
+
+      <!-- Paginación (se llena con JavaScript) -->
+      <div class="pagination" id="pagination"></div>
+    </div>
+  </main>
+
+  <%- include('../partials/admin-footer') %>
+
+  <!-- Scripts -->
+  <script type="module" src="/admin/js/api-client.js"></script>
+  <script type="module" src="/admin/js/admin-main.js"></script>
+</body>
+</html>
+
+

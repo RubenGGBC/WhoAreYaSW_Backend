@@ -8,7 +8,7 @@ const DELAY_MS = 1000 / REQUESTS_PER_SECOND;
 
 (async () => {
   try {
-    const imagesPath = path.join(__dirname, '../../images/pokemon');
+    const imagesPath = path.join(__dirname, '../../public/images/pokemon');
 
     // Crear carpeta si no existe
     await fs.mkdir(imagesPath, { recursive: true });
