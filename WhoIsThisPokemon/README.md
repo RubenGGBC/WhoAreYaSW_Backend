@@ -13,7 +13,8 @@ Toda la parte de Pokémon está contenida en la carpeta:
 Dentro de ella conviven:
 - Backend (Node/Express/Mongo) en la **misma carpeta** (`server.js`, `src/`, etc.)
 - Frontend estático del extra en `WhoIsThisPokemon/public/` (html/css/js/json)
-- Recursos (imágenes) en `WhoIsThisPokemon/images/`
+- Vistas EJS en `WhoIsThisPokemon/views/`
+- Recursos (imágenes) en `WhoIsThisPokemon/public/images/`
 
 ---
 
@@ -427,13 +428,13 @@ router.put('/pokemon/:id', isAuthenticated, isAdmin, upload.single('image'), pok
 Los controladores (`src/controllers/pokemonController.js` y `pokemonGameController.js`) están **100% alineados** con los controladores de jugadores:
 
 **Características compartidas:**
-- ✅ Función `escapeRegex()` para búsquedas seguras
-- ✅ Validación robusta con arrays de errores
-- ✅ Manejo de imágenes con `req.file`
-- ✅ Búsqueda dual por ID numérico o MongoDB `_id`
-- ✅ Verificación de duplicados antes de crear/actualizar
-- ✅ Manejo consistente de errores con `.catch(() => null)`
-- ✅ Formato de respuestas idéntico
+- Función `escapeRegex()` para búsquedas seguras
+- Validación robusta con arrays de errores
+- Manejo de imágenes con `req.file`
+- Búsqueda dual por ID numérico o MongoDB `_id`
+- Verificación de duplicados antes de crear/actualizar
+- Manejo consistente de errores con `.catch(() => null)`
+- Formato de respuestas idéntico
 
 **Ejemplo de validación en controlador:**
 ```javascript
@@ -479,84 +480,105 @@ La solución del día se obtiene dinámicamente:
 - `GET /api/game/current` → obtiene el número del juego
 - `GET /api/solution/:gameNumber` → obtiene el Pokémon solución
 
-### 4.8. Cambios importantes (Actualización 2026-01-01)
-
-**Refactorización completa para consistencia con playerController:**
-
-1. **Controladores actualizados:**
-   - `pokemonController.js`: Ahora idéntico en estructura a `playerController.js`
-   - `pokemonGameController.js`: Ahora idéntico en estructura a `gameController.js`
-   - Función `escapeRegex()` añadida para seguridad en búsquedas
-   - Validación robusta con arrays de errores detallados
-   - Manejo de subida de imágenes con `req.file`
-
-2. **Rutas actualizadas:**
-   - `pokemonRoutes.js`: Añadido middleware `upload.single('image')` en POST/PUT
-   - `pokemonGameRoutes.js`: Formato de comentarios consistente
-   - Mismo orden y estructura que las rutas de jugadores
-
-3. **Configuración:**
-   - `app.js`: Estructura reorganizada para ser idéntica al proyecto principal
-   - Rutas API primero, luego autenticación (sin prefijo `/auth`)
-   - Manejo de errores consistente con código `INTERNAL_SERVER_ERROR`
-   - `src/config/multer.js`: Configuración para subida de imágenes de Pokémon
-
-4. **Dependencias:**
-   - Se usa `multer` del proyecto raíz (no duplicado en package.json)
-   - Todas las dependencias compartidas con el proyecto principal
-
-**Razonamiento:**
-
-- **Coherencia total:** Ambos sistemas (jugadores y Pokémon) son ahora idénticos en estructura.
-- **Mantenibilidad:** Cambios en uno se pueden replicar fácilmente al otro.
-- **Seguridad:** Escape de regex, validaciones robustas, protección contra inyecciones.
-- **Escalabilidad:** Patrones probados y consistentes facilitan el crecimiento del proyecto.
-
-**Pruebas:**
-- ✅ CRUD completo verificado con `test-crud.js`
-- ✅ Todas las operaciones (CREATE, READ, UPDATE, DELETE) funcionando
-- ✅ Búsquedas con regex y filtros por tipo funcionando
-- ✅ Manejo dual de IDs (numérico y MongoDB) funcionando
-
 ---
 
-## Instalación y ejecución (Windows / cmd)
+## Milestone 5: Panel de administración web (Admin)
 
-Desde la raíz del repo, entra a la carpeta del proyecto:
+Este milestone implementa un panel web para administradores para **gestionar Pokémon** de forma visual, consumiendo la **API REST** del Milestone 4.
 
-```bat
-cd WhoIsThisPokemon
-npm install
-```
+### 5.1 Objetivos cubiertos
 
-Crea `.env` a partir de `.env.example` (en cmd no existe `cp`):
+- Vistas del panel con **EJS**.
+- Formularios HTML para operaciones CRUD.
+- Comunicación con la API REST mediante **fetch** desde el navegador.
+- Protección de rutas con **sesión + rol `admin`**.
+- Mensajes de feedback (éxito/error) y confirmación antes de eliminar.
 
-```bat
-copy .env.example .env
-```
+### 5.2 Separación de rutas (prefijos)
 
-Poblar la BD:
+La separación es la misma que en el proyecto original (juego de fútbol):
 
-```bat
-npm run seed
-```
+- `/` : Frontend del juego (público, sin login).
+- `/api/*` : API REST (JSON; escrituras protegidas por auth + rol).
+- `/admin/*` : Panel de administración (requiere auth + rol `admin`).
 
-Arranque:
+### 5.3 Aproximación elegida (Cliente => API)
 
-```bat
-npm run dev
-```
+Se sigue la **Aproximación 2: Cliente => API** (igual que el proyecto raíz):
 
-Scripts útiles:
-- Descargar imágenes: `npm run fetch-images`
-- Poblar la BD: `npm run seed`
+- El servidor Express **solo renderiza vistas** (rutas GET).
+- El JavaScript del navegador llama directamente a la API REST (`/api/*`) con `fetch`.
+
+Esto mantiene una arquitectura limpia y coherente con el enfoque API-first del proyecto.
+
+### 5.4 Rutas del panel (GET)
+
+> Todas las rutas están protegidas con `isAuthenticated` + `isAdmin`.
+
+- `GET /admin` → Dashboard (lista, búsqueda, filtros, paginación)
+- `GET /admin/pokemon/new` → Formulario de creación
+- `GET /admin/pokemon/edit/:id` → Formulario de edición
+
+Implementación:
+- Rutas: `WhoIsThisPokemon/src/routes/adminRoutes.js`
+- Controlador (render EJS): `WhoIsThisPokemon/src/controllers/adminController.js`
+
+### 5.5 Protección de rutas (middleware)
+
+Todas las rutas `/admin/*` pasan por:
+
+- `WhoIsThisPokemon/src/middlewares/authMiddleware.js`
+  - `isAuthenticated`: requiere `req.session.userId`
+  - `isAdmin`: requiere `req.session.userRole === 'admin'`
+
+> Nota: el panel no usa tokens; usa sesión con `express-session` + `connect-mongo` (igual que el juego principal).
+
+### 5.6 Operaciones CRUD (siempre vía API REST)
+
+El panel **no accede a la base de datos** directamente: todas las operaciones se hacen llamando a la API.
+
+- Listar: `GET /api/pokemon` (con `page`, `limit`, `search`, `type`)
+- Obtener 1: `GET /api/pokemon/:id`
+- Crear: `POST /api/pokemon` (JSON o `multipart/form-data` si hay imagen)
+- Actualizar: `PUT /api/pokemon/:id` (JSON o `multipart/form-data` si hay imagen)
+- Eliminar: `DELETE /api/pokemon/:id`
+
+Cliente API (fetch):
+- `WhoIsThisPokemon/public/admin/js/api-client.js`
+
+### 5.7 Frontend del panel
+
+Vistas EJS:
+- `WhoIsThisPokemon/views/admin/dashboard.ejs`
+- `WhoIsThisPokemon/views/admin/new-pokemon.ejs`
+- `WhoIsThisPokemon/views/admin/edit-pokemon.ejs`
+
+JS del panel:
+- Dashboard: `WhoIsThisPokemon/public/admin/js/admin-main.js`
+- Crear: `WhoIsThisPokemon/public/admin/js/pokemon-form.js`
+- Editar: `WhoIsThisPokemon/public/admin/js/pokemon-edit.js`
+- Autocomplete: `WhoIsThisPokemon/public/admin/js/admin-autocomplete.js`
+
+CSS:
+- `WhoIsThisPokemon/public/admin/css/admin.css`
+
+### 5.8 Imágenes
+
+- Las imágenes se sirven desde la ruta pública: `WhoIsThisPokemon/public/images/pokemon/`
+- Las URLs que usa el panel siguen el mismo patrón que el proyecto original:
+  - `/images/pokemon/{id}.png`
+
+Configuración en Express:
+- `WhoIsThisPokemon/src/app.js` expone `/images/pokemon` apuntando a `public/images/pokemon`.
+
+Importante:
+- **No existe `default.png`** para Pokémon. Cuando una imagen no está disponible, el UI la oculta (en el autocomplete) o simplemente se verá rota según el componente.
+
+### 5.9 Validaciones y UX
+
+- Validación HTML5 (required, min, etc.) en los formularios.
+- Validación adicional en JS para mostrar errores por campo.
+- Confirmación antes de eliminar.
+- Mensajes de éxito/error (alertas) al crear, actualizar y eliminar.
 
 ---
-
-## Verificación rápida en MongoDB
-
-Tras ejecutar los seeders:
-
-- DB `pokemon`
-- `pokemons`: 1000 docs
-- `pokemonsolutions`: 365 docs

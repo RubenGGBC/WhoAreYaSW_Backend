@@ -1,8 +1,8 @@
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const app = require('./src/app');
 const { connectDB } = require('./src/db/connection');
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 async function startServer() {
     try {

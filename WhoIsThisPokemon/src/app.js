@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 
 const app = express();
@@ -27,6 +28,9 @@ app.use(session({
 // Rutas API (primero para evitar conflictos)
 app.use('/api', require('./routes/pokemonRoutes'));
 app.use('/api', require('./routes/pokemonGameRoutes'));
+// Rutas de administración
+app.use('/admin', adminRoutes);
+
 
 // Rutas de autenticación (sin prefijo)
 app.use('/', authRoutes);

@@ -1,1 +1,124 @@
-<!--edit-pokemon.ejs-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/admin/css/admin.css">
+</head>
+<body>
+  <%- include('../partials/admin-header', { page: 'dashboard', user: user }) %>
+
+  <main class="admin-main">
+    <div class="container">
+      <div class="form-header">
+        <h2>Editar Pokémon</h2>
+        <a href="/admin" class="btn btn-secondary">← Volver</a>
+      </div>
+
+      <!-- Loading spinner mientras carga datos -->
+      <div id="loading" class="loading">Cargando datos del Pokémon...</div>
+
+      <!-- Mensajes de error/éxito -->
+      <div id="form-message" class="alert" style="display: none;"></div>
+
+      <!-- Formulario -->
+      <form id="pokemon-form" class="player-form" style="display: none;">
+        <input type="hidden" id="pokemon-id" value="<%= pokemonId %>">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Nombre *</label>
+            <input type="text" id="name" name="name" required>
+            <span class="error-message" id="name-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="id">ID (Número Pokédex) *</label>
+            <input type="number" id="id" name="id" required min="1">
+            <span class="error-message" id="id-error"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="type1">Tipo Principal *</label>
+            <select id="type1" name="type1" required>
+              <option value="">Selecciona tipo</option>
+              <option value="Normal">Normal</option>
+              <option value="Fire">Fuego</option>
+              <option value="Water">Agua</option>
+              <option value="Electric">Eléctrico</option>
+              <option value="Grass">Planta</option>
+              <option value="Ice">Hielo</option>
+              <option value="Fighting">Lucha</option>
+              <option value="Poison">Veneno</option>
+              <option value="Ground">Tierra</option>
+              <option value="Flying">Volador</option>
+              <option value="Psychic">Psíquico</option>
+              <option value="Bug">Bicho</option>
+              <option value="Rock">Roca</option>
+              <option value="Ghost">Fantasma</option>
+              <option value="Dragon">Dragón</option>
+              <option value="Dark">Siniestro</option>
+              <option value="Steel">Acero</option>
+              <option value="Fairy">Hada</option>
+            </select>
+            <span class="error-message" id="type1-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="type2">Tipo Secundario</label>
+            <select id="type2" name="type2">
+              <option value="">Sin tipo secundario</option>
+              <option value="Normal">Normal</option>
+              <option value="Fire">Fuego</option>
+              <option value="Water">Agua</option>
+              <option value="Electric">Eléctrico</option>
+              <option value="Grass">Planta</option>
+              <option value="Ice">Hielo</option>
+              <option value="Fighting">Lucha</option>
+              <option value="Poison">Veneno</option>
+              <option value="Ground">Tierra</option>
+              <option value="Flying">Volador</option>
+              <option value="Psychic">Psíquico</option>
+              <option value="Bug">Bicho</option>
+              <option value="Rock">Roca</option>
+              <option value="Ghost">Fantasma</option>
+              <option value="Dragon">Dragón</option>
+              <option value="Dark">Siniestro</option>
+              <option value="Steel">Acero</option>
+              <option value="Fairy">Hada</option>
+            </select>
+            <span class="error-message" id="type2-error"></span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="image">Cambiar imagen del Pokémon</label>
+            <input type="file" id="image" name="image" accept="image/*">
+            <span class="error-message" id="image-error"></span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <span class="btn-text">Guardar Cambios</span>
+            <span class="btn-loading" style="display: none;">Guardando...</span>
+          </button>
+          <a href="/admin" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <%- include('../partials/admin-footer') %>
+
+  <!-- Scripts -->
+  <script type="module" src="/admin/js/api-client.js"></script>
+  <script type="module" src="/admin/js/pokemon-edit.js"></script>
+</body>
+</html>
+
+
