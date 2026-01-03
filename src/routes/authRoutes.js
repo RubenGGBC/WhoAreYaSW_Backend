@@ -52,39 +52,8 @@ router.post('/login',
 );
 
 // Rutas protegidas (requieren autenticación)
-router.post('/logout', isAuthenticated, authController.logout);
+router.post('/logout', authController.logout);
 router.get('/current-user', authController.getCurrentUser);
 router.get('/me', isAuthenticated, authController.getCurrentUser);
-
-// ============================================
-// RUTAS OAUTH
-// ============================================
-const passport = require('passport');
-
-// Google OAuth
-router.get('/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-);
-
-router.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login' }),
-    (req, res) => {
-        // Éxito - redirigir al dashboard o home
-        res.redirect('/admin/dashboard');
-    }
-);
-
-// GitHub OAuth
-router.get('/auth/github',
-    passport.authenticate('github', { scope: ['user:email'] })
-);
-
-router.get('/auth/github/callback',
-    passport.authenticate('github', { failureRedirect: '/login' }),
-    (req, res) => {
-        // Éxito - redirigir al dashboard o home
-        res.redirect('/admin/dashboard');
-    }
-);
 
 module.exports = router;

@@ -164,13 +164,22 @@
                 logoutBtn.textContent = 'Cerrando...';
 
                 try {
+                    const token = localStorage.getItem('token');
+                    const headers = { 'Content-Type': 'application/json' };
+                    
+                    // Si hay token JWT, enviarlo
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     const res = await fetch('/logout', {
                         method: 'POST',
                         credentials: 'same-origin',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: headers
                     });
 
-                    // Aunque falle, limpiamos estado del cliente y refrescamos
+                    // Limpiar estado del cliente
+                    localStorage.removeItem('token');
                     localStorage.removeItem('userName');
                     localStorage.removeItem('userRole');
                     setLoggedInUI(false);
@@ -183,6 +192,7 @@
                         await refreshFromServer();
                     }
                 } catch (e) {
+                    localStorage.removeItem('token');
                     localStorage.removeItem('userName');
                     localStorage.removeItem('userRole');
                     setLoggedInUI(false);
