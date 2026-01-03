@@ -61,17 +61,17 @@ window.onload = function () {
 
       if (response.ok && data.success) {
         // Guardar información del usuario en localStorage
-        if (data.data) {
-          localStorage.setItem('userName', data.data.name);
-          localStorage.setItem('userRole', data.data.role);
+        if (data.data && data.data.token) {
+          localStorage.setItem('authToken', data.data.token);
+          localStorage.setItem('userName', data.data.user.name);
+          localStorage.setItem('userRole', data.data.user.role);
 
-          // Redirigir según el rol
-          if (data.data.role === 'admin') {
+          // Si es admin, ir al dashboard
+          if (data.data.user.role === 'admin') {
             window.location.href = '/admin';
           } else {
             window.location.href = '/';
           }
-
           return;
         }
 

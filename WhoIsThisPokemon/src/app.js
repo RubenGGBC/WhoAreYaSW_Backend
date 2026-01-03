@@ -1,6 +1,7 @@
 const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
+const passport = require('./config/passport');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
@@ -18,12 +19,21 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use(session({
   secret: process.env.SESSION_SECRET || '9B906D89BCBA4328-8A48923B899AFC0C-83D507C9E55D4A5B-ACCEE54828089617',
   resave: false,
-  saveUninitialized: true,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    httpOnly: true,
+    secure: false // Cambiar a true en producción con HTTPS
+  },
   store: new MongoStore({
     mongoUrl: process.env.MONGO_URI || 'mongodb://localhost:27017/pokemon',
     ttl: 24 * 60 * 60
   })
 }));
+
+// Inicializar Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Rutas API (primero para evitar conflictos)
 app.use('/api', require('./routes/pokemonRoutes'));

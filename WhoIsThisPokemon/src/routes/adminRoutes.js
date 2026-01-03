@@ -2,10 +2,11 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { isAuthenticated, isAdmin } = require('../middlewares/authMiddleware');
+const { isAuthenticatedView, isAdminView } = require('../middlewares/authMiddlewareNew');
 
-router.use(isAuthenticated);
-router.use(isAdmin);
+// Todas las rutas de admin usan el middleware de vista
+router.use(isAuthenticatedView);
+router.use(isAdminView);
 
 router.get('/', adminController.getAdminDashboard);
 

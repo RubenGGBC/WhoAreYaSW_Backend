@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const passport = require('passport');
 const authController = require('../controllers/authController');
 const { isAuthenticated } = require('../middlewares/authMiddleware');
 
@@ -23,6 +24,34 @@ const handleValidationErrors = (req, res, next) => {
     }
     next();
 };
+
+// Rutas OAuth - Google
+router.get('/auth/google',
+    passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get('/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/login?error=google' }),
+    (req, res) => {
+        req.session.userId = req.user._id;
+        req.session.userRole = req.user.role;
+        res.redirect('/');
+    }
+);
+
+// Rutas OAuth - GitHub
+router.get('/auth/github',
+    passport.authenticate('github', { scope: ['user:email'] })
+);
+
+router.get('/auth/github/callback',
+    passport.authenticate('github', { failureRedirect: '/login?error=github' }),
+    (req, res) => {
+        req.session.userId = req.user._id;
+        req.session.userRole = req.user.role;
+        res.redirect('/');
+    }
+);
 
 // Rutas públicas (sin autenticación)
 router.post('/register',
@@ -52,7 +81,7 @@ router.post('/login',
 );
 
 // Rutas protegidas (requieren autenticación)
-router.post('/logout', isAuthenticated, authController.logout);
+router.post('/logout', authController.logout);
 router.get('/current-user', authController.getCurrentUser);
 router.get('/me', isAuthenticated, authController.getCurrentUser);
 

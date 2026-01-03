@@ -1,21 +1,73 @@
-// Middleware para verificar que el usuario está autenticado
-const isAuthenticated = (req, res, next) => {
-  if (!req.session || !req.session.userId) {
-    return res.status(401).json({
-      success: false,
-      error: {
-        code: 'NOT_AUTHENTICATED',
-        message: 'Debe iniciar sesión'
-      }
-    });
-  }
+const { verifyAccessToken } = require('../utils/jwt');
+const User = require('../models/User');
 
-  next();
+// Middleware para verificar que el usuario está autenticado
+const isAuthenticated = async (req, res, next) => {
+    try {
+        // Primero intentar con JWT token
+        const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            const decoded = verifyAccessToken(token);
+            
+            const user = await User.findById(decoded.userId);
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    error: {
+                        code: 'USER_NOT_FOUND',
+                        message: 'Usuario no encontrado'
+                    }
+                });
+            }
+            
+            req.user = user;
+            req.userId = user._id;
+            req.userRole = user.role;
+            
+            return next();
+        }
+        
+        // Si no hay token JWT, intentar con sesión de Passport (OAuth)
+        if (req.session && req.session.userId) {
+            req.userId = req.session.userId;
+            req.userRole = req.session.userRole;
+            return next();
+        }
+        
+        // Ninguna forma de autenticación válida
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'NOT_AUTHENTICATED',
+                message: 'Token no proporcionado'
+            }
+        });
+    } catch (error) {
+        if (error.message === 'TOKEN_EXPIRED') {
+            return res.status(401).json({
+                success: false,
+                error: {
+                    code: 'TOKEN_EXPIRED',
+                    message: 'Token expirado'
+                }
+            });
+        }
+        
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'INVALID_TOKEN',
+                message: 'Token inválido'
+            }
+        });
+    }
 };
 
 // Middleware para verificar que el usuario es admin
 const isAdmin = (req, res, next) => {
-  if (!req.session || !req.session.userRole || req.session.userRole !== 'admin') {
+  if (req.userRole !== 'admin') {
     return res.status(403).json({
       success: false,
       error: {

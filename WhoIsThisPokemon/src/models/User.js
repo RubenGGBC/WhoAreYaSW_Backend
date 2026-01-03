@@ -20,15 +20,28 @@ const UserSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true,
+        required:function (){
+            return this.provider==='local';
+        },
         minlength:8,
     },
     role:{
         type:String,
         enum:['admin','user'],
         default:'user',
+    },
+    provider:{
+        type:String,
+        enum:['local','google','github'],
+        default:'local',
+    },
+    providerId:{
+        type:String,
+        sparse:true,
+    },
+    icon:{
+        type:String,
     }
-
 });
 
 UserSchema.pre('save', async function () {

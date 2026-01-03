@@ -100,8 +100,17 @@ export let setupRows = function (game) {
     function unblur(outcome) {
         return new Promise( (resolve, reject) =>  {
             setTimeout(() => {
-                document.getElementById("mistery").classList.remove("blur")
-                document.getElementById("combobox").remove()
+                const misteryEl = document.getElementById("mistery");
+                const comboboxEl = document.getElementById("combobox");
+                
+                if (misteryEl) {
+                    misteryEl.classList.remove("blur");
+                }
+                
+                if (comboboxEl) {
+                    comboboxEl.remove();
+                }
+                
                 let color, text
                 if (outcome=='success'){
                     color =  "bg-blue-500"
@@ -110,7 +119,11 @@ export let setupRows = function (game) {
                     color =  "bg-rose-500"
                     text = "The pokémon was " + game.solution.pokemonName
                 }
-                document.getElementById("picbox").innerHTML += `<div class="animate-pulse fixed z-20 top-14 left-1/2 transform -translate-x-1/2 max-w-sm shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${color} text-white"><div class="p-4"><p class="text-sm text-center font-medium">${text}</p></div></div>`
+                
+                const picboxEl = document.getElementById("picbox");
+                if (picboxEl) {
+                    picboxEl.innerHTML += `<div class="animate-pulse fixed z-20 top-14 left-1/2 transform -translate-x-1/2 max-w-sm shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden ${color} text-white"><div class="p-4"><p class="text-sm text-center font-medium">${text}</p></div></div>`;
+                }
                 resolve();
             }, "2000")
         })

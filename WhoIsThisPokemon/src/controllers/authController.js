@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { generateAccessToken } = require('../utils/jwt');
 
 // GET - Renderizar vista de registro
 exports.getRegisterView = (req, res) => {
@@ -10,9 +11,29 @@ exports.getRegisterView = (req, res) => {
 
 // GET - Renderizar vista de login
 exports.getLoginView = (req, res) => {
+    const queryError = req.query.error;
+    let errorMessage = null;
+
+    if (queryError) {
+        switch(queryError) {
+            case 'google':
+                errorMessage = 'Error al iniciar sesión con Google. Inténtalo de nuevo.';
+                break;
+            case 'github':
+                errorMessage = 'Error al iniciar sesión con GitHub. Inténtalo de nuevo.';
+                break;
+            case 'oauth':
+                errorMessage = 'Error en la autenticación OAuth. Inténtalo más tarde.';
+                break;
+            default:
+                errorMessage = 'Error en la autenticación.';
+        }
+    }
     res.render('auth/login', {
         title: 'Iniciar Sesión',
-        error: null
+        error: null,
+        queryError: errorMessage,
+        success: req.query.success || null
     });
 };
 
@@ -46,21 +67,41 @@ exports.register = async (req, res) => {
         // Contar usuarios para determinar si es admin, si es el primero entonces es un admin
         const userCount = await User.countDocuments();
         const role = userCount === 0 ? 'admin' : 'user';
+        
         // Crear nuevo usuario
         const newUser = new User({ name, lastName, email, password, role });
         await newUser.save();
+        
+        const token = generateAccessToken({
+            userId: newUser._id,
+            email: newUser.email,
+            role: newUser.role
+        });
+        
+        // Guardar en sesión también para vistas
         req.session.userId = newUser._id;
         req.session.userRole = newUser.role;
-        res.status(201).json({
-            success: true,
-            data: {
-                id: newUser._id,
-                name: newUser.name,
-                lastName: newUser.lastName,
-                email: newUser.email,
-                role: newUser.role
-            },
-            message: role === 'admin' ? 'Primer usuario registrado como admin' : 'Usuario registrado exitosamente'
+        
+        // Forzar guardado de sesión
+        req.session.save((err) => {
+            if (err) {
+                console.error('Error guardando sesión:', err);
+            }
+            
+            res.status(201).json({
+                success: true,
+                data: {
+                    token,
+                    user: {
+                        id: newUser._id,
+                        name: newUser.name,
+                        lastName: newUser.lastName,
+                        email: newUser.email,
+                        role: newUser.role
+                    }
+                },
+                message: role === 'admin' ? 'Primer usuario registrado como admin' : 'Usuario registrado exitosamente'
+            });
         });
     } catch (error) {
         res.status(500).json({
@@ -98,19 +139,37 @@ exports.login = async (req, res) => {
                 }
             });
         }
-        //Guardamos la sesión y respondemos
+        
+        const token = generateAccessToken({
+            userId: user._id,
+            email: user.email,
+            role: user.role
+        });
+        
+        // Guardar en sesión también para vistas
         req.session.userId = user._id;
         req.session.userRole = user.role;
-        res.status(200).json({
-            success: true,
-            data: {
-                id: user._id,
-                name: user.name,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role
-            },
-            message: 'Sesión iniciada exitosamente'
+        
+        // Forzar guardado de sesión
+        req.session.save((err) => {
+            if (err) {
+                console.error('Error guardando sesión:', err);
+            }
+            
+            res.status(200).json({
+                success: true,
+                data: {
+                    token,
+                    user: {
+                        id: user._id,
+                        name: user.name,
+                        lastName: user.lastName,
+                        email: user.email,
+                        role: user.role
+                    }
+                },
+                message: 'Login exitoso'
+            });
         });
     } catch (error) {
         res.status(500).json({
@@ -124,22 +183,40 @@ exports.login = async (req, res) => {
 };
 exports.logout = async (req, res) => {
     try {
-        req.session.destroy((err) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    error: {
-                        code: 'LOGOUT_ERROR',
-                        message: 'Error al cerrar sesión'
-                    }
-                });
-            }
-            res.clearCookie('connect.sid');
-            res.status(200).json({
+        // Si hay token JWT, simplemente responder éxito (el cliente borra el token)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return res.status(200).json({
                 success: true,
                 message: 'Sesión cerrada exitosamente'
             });
-        });
+        }
+        
+        // Si hay sesión de Passport, destruirla
+        if (req.session) {
+            req.session.destroy((err) => {
+                if (err) {
+                    return res.status(500).json({
+                        success: false,
+                        error: {
+                            code: 'LOGOUT_ERROR',
+                            message: 'Error al cerrar sesión'
+                        }
+                    });
+                }
+                res.clearCookie('connect.sid');
+                return res.status(200).json({
+                    success: true,
+                    message: 'Sesión cerrada exitosamente'
+                });
+            });
+        } else {
+            // Sin sesión ni token, responder éxito de todas formas
+            return res.status(200).json({
+                success: true,
+                message: 'Sesión cerrada exitosamente'
+            });
+        }
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -150,22 +227,77 @@ exports.logout = async (req, res) => {
         });
     }
 };
-exports.getCurrentUser = (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).json({
+exports.getCurrentUser = async (req, res) => {
+    try {
+        // Verificar JWT token primero
+        const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            try {
+                const { verifyAccessToken } = require('../utils/jwt');
+                const decoded = verifyAccessToken(token);
+                
+                const user = await User.findById(decoded.userId);
+                if (user) {
+                    return res.status(200).json({
+                        success: true,
+                        data: {
+                            userId: user._id,
+                            name: user.name,
+                            lastName: user.lastName,
+                            email: user.email,
+                            role: user.role
+                        }
+                    });
+                }
+            } catch (tokenError) {
+                // Token inválido o expirado, continuar con sesión
+            }
+        }
+        
+        // Verificar sesión de Passport (OAuth)
+        if (req.session.userId && req.user) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    userId: req.user._id,
+                    name: req.user.name,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                    role: req.user.role
+                }
+            });
+        }
+        
+        // Si hay usuario en sesión pero no userId
+        if (req.user) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    userId: req.user._id,
+                    name: req.user.name,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                    role: req.user.role
+                }
+            });
+        }
+
+        // No hay autenticación válida - devolver 200 con data null
+        // Esto permite que el frontend maneje elegantemente el caso de "no autenticado"
+        return res.status(200).json({
+            success: false,
+            data: null,
+            message: 'No hay sesión activa'
+        });
+    } catch (error) {
+        res.status(500).json({
             success: false,
             error: {
-                code: 'NOT_AUTHENTICATED',
-                message: 'Usuario no autenticado'
+                code: 'GET_USER_ERROR',
+                message: error.message
             }
         });
     }
-
-    res.status(200).json({
-        success: true,
-        data: {
-            userId: req.session.userId,
-            role: req.session.userRole
-        }
-    });
 };
