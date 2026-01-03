@@ -3,37 +3,46 @@ const User = require('../models/User');
 
 exports.isAuthenticated = async (req, res, next) => {
     try {
+        // Primero intentar con JWT token
         const authHeader = req.headers.authorization;
         
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                success: false,
-                error: {
-                    code: 'NOT_AUTHENTICATED',
-                    message: 'Token no proporcionado'
-                }
-            });
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            const decoded = verifyAccessToken(token);
+            
+            const user = await User.findById(decoded.userId);
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    error: {
+                        code: 'USER_NOT_FOUND',
+                        message: 'Usuario no encontrado'
+                    }
+                });
+            }
+            
+            req.user = user;
+            req.userId = user._id;
+            req.userRole = user.role;
+            
+            return next();
         }
         
-        const token = authHeader.substring(7);
-        const decoded = verifyAccessToken(token);
-        
-        const user = await User.findById(decoded.userId);
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                error: {
-                    code: 'USER_NOT_FOUND',
-                    message: 'Usuario no encontrado'
-                }
-            });
+        // Si no hay token JWT, intentar con sesión de Passport (OAuth)
+        if (req.session.userId && req.user) {
+            req.userId = req.user._id;
+            req.userRole = req.user.role;
+            return next();
         }
         
-        req.user = user;
-        req.userId = user._id;
-        req.userRole = user.role;
-        
-        next();
+        // Ninguna forma de autenticación válida
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'NOT_AUTHENTICATED',
+                message: 'Token no proporcionado'
+            }
+        });
     } catch (error) {
         if (error.message === 'TOKEN_EXPIRED') {
             return res.status(401).json({

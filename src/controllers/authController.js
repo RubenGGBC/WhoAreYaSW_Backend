@@ -153,23 +153,40 @@ exports.login = async (req, res) => {
 };
 exports.logout = async (req, res) => {
     try {
-        // Destruir la sesión (esto también limpia los datos de Passport)
-        req.session.destroy((err) => {
-            if (err) {
-                return res.status(500).json({
-                    success: false,
-                    error: {
-                        code: 'LOGOUT_ERROR',
-                        message: 'Error al cerrar sesión'
-                    }
-                });
-            }
-            res.clearCookie('connect.sid');
-            res.status(200).json({
+        // Si hay token JWT, simplemente responder éxito (el cliente borra el token)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return res.status(200).json({
                 success: true,
                 message: 'Sesión cerrada exitosamente'
             });
-        });
+        }
+        
+        // Si hay sesión de Passport, destruirla
+        if (req.session) {
+            req.session.destroy((err) => {
+                if (err) {
+                    return res.status(500).json({
+                        success: false,
+                        error: {
+                            code: 'LOGOUT_ERROR',
+                            message: 'Error al cerrar sesión'
+                        }
+                    });
+                }
+                res.clearCookie('connect.sid');
+                return res.status(200).json({
+                    success: true,
+                    message: 'Sesión cerrada exitosamente'
+                });
+            });
+        } else {
+            // Sin sesión ni token, responder éxito de todas formas
+            return res.status(200).json({
+                success: true,
+                message: 'Sesión cerrada exitosamente'
+            });
+        }
     } catch (error) {
         res.status(500).json({
             success: false,
@@ -182,18 +199,48 @@ exports.logout = async (req, res) => {
 };
 exports.getCurrentUser = async (req, res) => {
     try {
-        // Verificar tanto sesión manual como Passport
-        if (!req.session.userId && !req.user) {
-            return res.status(401).json({
-                success: false,
-                error: {
-                    code: 'NOT_AUTHENTICATED',
-                    message: 'Usuario no autenticado'
+        // Verificar JWT token primero
+        const authHeader = req.headers.authorization;
+        
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.substring(7);
+            try {
+                const { verifyAccessToken } = require('../utils/jwt');
+                const decoded = verifyAccessToken(token);
+                
+                const user = await User.findById(decoded.userId);
+                if (user) {
+                    return res.status(200).json({
+                        success: true,
+                        data: {
+                            userId: user._id,
+                            name: user.name,
+                            lastName: user.lastName,
+                            email: user.email,
+                            role: user.role
+                        }
+                    });
+                }
+            } catch (tokenError) {
+                // Token inválido o expirado, continuar con sesión
+            }
+        }
+        
+        // Verificar sesión de Passport (OAuth)
+        if (req.session.userId && req.user) {
+            return res.status(200).json({
+                success: true,
+                data: {
+                    userId: req.user._id,
+                    name: req.user.name,
+                    lastName: req.user.lastName,
+                    email: req.user.email,
+                    role: req.user.role
                 }
             });
         }
-
-        // Si viene de OAuth (req.user existe), usar esos datos directamente
+        
+        // Si hay usuario en sesión pero no userId
         if (req.user) {
             return res.status(200).json({
                 success: true,
@@ -207,26 +254,12 @@ exports.getCurrentUser = async (req, res) => {
             });
         }
 
-        // Si es sesión manual, obtener datos del usuario desde DB
-        const user = await User.findById(req.session.userId);
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                error: {
-                    code: 'USER_NOT_FOUND',
-                    message: 'Usuario no encontrado'
-                }
-            });
-        }
-
-        res.status(200).json({
-            success: true,
-            data: {
-                userId: user._id,
-                name: user.name,
-                lastName: user.lastName,
-                email: user.email,
-                role: user.role
+        // No hay autenticación válida
+        return res.status(401).json({
+            success: false,
+            error: {
+                code: 'NOT_AUTHENTICATED',
+                message: 'Usuario no autenticado'
             }
         });
     } catch (error) {

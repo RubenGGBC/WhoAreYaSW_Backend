@@ -3,6 +3,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo').default;
 const passport = require('passport');
 const authRoutes = require('./routes/authRoutes');
+const oauthRoutes = require('./routes/oauthRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 
@@ -33,6 +34,7 @@ app.use('/api', require('./routes/gameRoutes'));
 
 app.use('/admin', adminRoutes);
 
+app.use('/', oauthRoutes);
 app.use('/', authRoutes);
 
 app.use((err, req, res, next) => {
