@@ -72,6 +72,23 @@ exports.register = async (req, res) => {
             role: newUser.role
         });
         
+        // Guardar token en cookie y sesión
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        });
+        
+        req.session.userId = newUser._id;
+        req.session.user = {
+            id: newUser._id,
+            name: newUser.name,
+            lastName: newUser.lastName,
+            email: newUser.email,
+            role: newUser.role
+        };
+        
+
         res.status(201).json({
             success: true,
             data: {
