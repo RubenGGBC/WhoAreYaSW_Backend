@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - Who Is This Pokémon?</title>
+    <link rel="stylesheet" href="/auth/css/auth.css">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Registrarse</h1>
+            <p class="auth-subtitle">Crea tu cuenta de entrenador</p>
+
+            <% if (error) { %>
+                <div class="auth-alert">
+                    <%= error %>
+                </div>
+            <% } %>
+
+            <form id="registerForm" class="auth-form">
+                <div class="auth-field">
+                    <label for="name">Nombre</label>
+                    <input type="text" id="name" name="name" required minlength="2"
+                           class="auth-input"
+                           placeholder="Tu nombre">
+                </div>
+
+                <div class="auth-field">
+                    <label for="lastName">Apellido</label>
+                    <input type="text" id="lastName" name="lastName" required minlength="2"
+                           class="auth-input"
+                           placeholder="Tu apellido">
+                </div>
+
+                <div class="auth-field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required
+                           class="auth-input"
+                           placeholder="tu@email.com">
+                </div>
+
+                <div class="auth-field">
+                    <label for="password">Contraseña</label>
+                    <input type="password" id="password" name="password" required minlength="8"
+                           class="auth-input"
+                           placeholder="Mínimo 8 caracteres">
+                    <p class="auth-help">La contraseña debe tener al menos 8 caracteres</p>
+                </div>
+
+                <div class="auth-field">
+                    <label for="confirmPassword">Confirmar Contraseña</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8"
+                           class="auth-input"
+                           placeholder="Repite tu contraseña">
+                </div>
+
+                <button type="submit" id="submitBtn" class="auth-btn">
+                    Registrarse
+                </button>
+            </form>
+
+            <p class="auth-links">
+                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a>
+            </p>
+
+            <a href="/" class="auth-back">
+                ← Volver al juego
+            </a>
+        </div>
+    </div>
+
+    <script src="/auth/js/register.js" defer></script>
+</body>
+</html>
+
+

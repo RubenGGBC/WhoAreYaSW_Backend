@@ -1,0 +1,89 @@
+<header class="admin-header">
+  <div class="container admin-header__inner">
+    <div class="admin-header__user">
+      <span id="adminUserGreeting" class="admin-user__greeting" style="display:none;"></span>
+
+      <button id="adminHomeBtn" type="button" class="btn btn-secondary">
+        Volver al juego
+      </button>
+
+      <button id="adminLogoutBtn" type="button" class="btn btn-secondary">
+        Cerrar sesión
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  (function () {
+    const btn = document.getElementById('adminLogoutBtn');
+    const homeBtn = document.getElementById('adminHomeBtn');
+    const greetingEl = document.getElementById('adminUserGreeting');
+
+    const setGreeting = (nameOrEmail) => {
+      if (!greetingEl) return;
+      if (!nameOrEmail) {
+        greetingEl.textContent = '';
+        greetingEl.style.display = 'none';
+        return;
+      }
+      greetingEl.textContent = `Hola, ${nameOrEmail}`;
+      greetingEl.style.display = '';
+    };
+
+    if (homeBtn) {
+      homeBtn.addEventListener('click', () => {
+        window.location.href = '/';
+      });
+    }
+
+    try {
+      const cachedName = localStorage.getItem('userName');
+      if (cachedName) setGreeting(cachedName);
+    } catch (e) {
+    }
+
+    fetch('/current-user', { credentials: 'same-origin' })
+      .then(async (res) => {
+        if (!res.ok) return null;
+        const json = await res.json();
+        return json && json.success ? json.data : null;
+      })
+      .then((user) => {
+        if (user && (user.name || user.email)) {
+          setGreeting(user.name || user.email);
+          try {
+            if (user.name) localStorage.setItem('userName', user.name);
+            if (user.role) localStorage.setItem('userRole', user.role);
+          } catch (e) {
+          }
+        }
+      })
+      .catch(() => {
+      });
+
+    btn.addEventListener('click', async () => {
+
+      try {
+        const res = await fetch('/logout', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        try {
+          localStorage.removeItem('userName');
+          localStorage.removeItem('userRole');
+        } catch (e) {
+        }
+        if (res.ok) {
+            window.location.href = '/';
+        } else {
+            window.location.href = '/';
+        }
+        } catch (error) {
+            window.location.href = '/';
+        }
+    });
+  })();
+</script>
+
