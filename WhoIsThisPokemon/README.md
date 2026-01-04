@@ -582,3 +582,15 @@ Importante:
 - Mensajes de éxito/error (alertas) al crear, actualizar y eliminar.
 
 ---
+
+## Milestone 6: Propuesta de ejercicios optativos
+
+Se ha aprovechado la Milestone 6 del proyecto raíz (Who Are Ya?) para realizar los siguientes ejercicios optativos aplicados al extra "Who Is This Pokémon?":
+
+- Autentificación OAuth
+
+- Tests automatizados (Jest + Supertest)
+
+-  JSON Web Tokens
+
+---
