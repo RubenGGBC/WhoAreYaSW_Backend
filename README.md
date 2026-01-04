@@ -2211,3 +2211,80 @@ Los tests cubren:
 
 ### 6.3 JSON Web Tokens
 ### ¿Qué hemos hecho?
+En este milestone hemos implementado autenticación basada en JSON Web Tokens (JWT) para la API, permitiendo un sistema stateless donde el cliente incluye el token en cada petición protegida.
+
+### 1. Generación de JWT al iniciar sesión
+- Al hacer login (POST /login), el backend genera un JWT firmado con una clave secreta.
+- El token incluye el userId, email y role.
+- El cliente debe guardar el token (por ejemplo, en localStorage) y enviarlo en el     header 
+- Authorization en futuras peticiones.
+
+### 2. Validación de JWT en rutas protegidas
+- Se ha creado un middleware isAuthenticated que:
+    -  Extrae el token del header Authorization: Bearer <token>.
+    - Verifica la validez y firma del token usando la clave secreta.
+    - Si es válido, añade los datos del usuario a req.user y permite el acceso.
+    - Si no, responde con error 401.
+- El middleware isAdmin comprueba que el usuario autenticado tenga rol admin.
+
+### 3. Logout y expiración
+- El logout en modo JWT es stateless: el cliente simplemente borra el token.
+- Los tokens tienen expiración configurable (JWT_EXPIRES_IN).
+
+### 4. Configuración necesaria
+Añade estas variables al archivo .env:
+```javascript
+JWT_SECRET=mltX2IFGvPV9gE5LUywKnizpC6HNQsMZJqA714WBY3bouRjkdeaSfxh0cTD8Or
+JWT_EXPIRES_IN=24h
+JWT_REFRESH_SECRET=MJjW0l3hR8bdsmPpXxSnr2NVI7aTBzkwFv1itgA5ODQEL9UYqKefCG4yH6oZuc
+JWT_REFRESH_EXPIRES_IN=7d
+```
+### 5. Flujo de autenticación con JWT
+1. El usuario hace login con email y contraseña.
+2. El backend responde con un JWT si las credenciales son correctas.
+3. El cliente guarda el token y lo envía en cada petición protegida.
+4. El backend valida el token en cada request.
+
+### 6. Archivos creados/modificados
+Archivos nuevos:
+    - jwt.js - Funciones para generar y verificar JWT.
+
+Archivos modificados:
+    - authController.js - Generación y validación de JWT en login, logout y obtención de usuario actual.
+    - authMiddleware.js - Middleware para proteger rutas usando JWT.
+    - authRoutes.js - Soporte para login/logout con JWT.
+    - login.js y register.js - Guardan el token JWT en el cliente tras login/registro.
+    - index.html - Lógica para enviar el token en logout y refrescar el estado del usuario.
+    - package.json - Añadida dependencia jsonwebtoken.
+### 7. Ejemplo de uso
+Login:
+```
+POST /login
+Content-Type: application/json
+
+{
+  "email": "usuario@ejemplo.com",
+  "password": "password123"
+}
+```
+
+Respuesta: 
+```javascript
+{
+  "success": true,
+  "data": {
+    "token": "<JWT_TOKEN>",
+    "user": {
+      "id": "...",
+      "name": "...",
+      "role": "user"
+    }
+  }
+}
+```
+Petición protegida:
+```
+GET /api/players
+Authorization: Bearer <JWT_TOKEN>
+```
+El sistema JWT está completamente integrado y convive con el sistema de sesiones y OAuth, permitiendo autenticación flexible y segura para la API REST.
