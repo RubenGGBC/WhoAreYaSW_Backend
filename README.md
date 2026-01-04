@@ -2288,3 +2288,11 @@ GET /api/players
 Authorization: Bearer <JWT_TOKEN>
 ```
 El sistema JWT está completamente integrado y convive con el sistema de sesiones y OAuth, permitiendo autenticación flexible y segura para la API REST.
+
+---
+
+## WhoIsThisPokemon
+
+Es el juego extra de pokemon, incluido en la carpeta WhoIsThisPokemon de la raíz del proyecto. Tiene su propio README localizado en dicha carpeta.
+
+---
