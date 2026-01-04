@@ -12,8 +12,31 @@ let allLeagues = [];
 
 let teamFilterCustomSelect = null;
 
+// Verificar autenticación antes de cargar cualquier cosa
+function checkAuth() {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  if (!token) {
+    window.location.href = '/login';
+    return false;
+  }
+
+  if (userRole !== 'admin') {
+    window.location.href = '/';
+    return false;
+  }
+
+  return true;
+}
+
 // Cargar jugadores, ligas y nacionalidades al iniciar la página
 window.onload = async () => {
+  // Verificar autenticación primero
+  if (!checkAuth()) {
+    return;
+  }
+
   try {
     // Cargar ligas y equipos en paralelo
     await Promise.all([loadLeagues(), loadTeamsData()]);

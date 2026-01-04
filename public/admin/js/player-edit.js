@@ -17,8 +17,31 @@ let teamSelect = null;
 let leagueSelect = null;
 let allLeagues = [];
 
+// Verificar autenticación antes de cargar cualquier cosa
+function checkAuth() {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  if (!token) {
+    window.location.href = '/login';
+    return false;
+  }
+
+  if (userRole !== 'admin') {
+    window.location.href = '/';
+    return false;
+  }
+
+  return true;
+}
+
 // Cargar datos al iniciar la página
 window.onload = async () => {
+  // Verificar autenticación primero
+  if (!checkAuth()) {
+    return;
+  }
+
   playerId = document.getElementById('player-id')?.value;
 
   try {
