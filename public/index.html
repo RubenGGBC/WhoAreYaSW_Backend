@@ -118,12 +118,24 @@
 
         const refreshFromServer = async () => {
             try {
-                const res = await fetch('/current-user', { credentials: 'same-origin' });
-                
+                const token = localStorage.getItem('token');
+                const headers = { 'Content-Type': 'application/json' };
+
+                // Si hay token JWT, enviarlo
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch('/current-user', {
+                    credentials: 'same-origin',
+                    headers: headers
+                });
+
                 // 401 es esperado cuando no hay sesión - no es un error
                 if (res.status === 401) {
                     localStorage.removeItem('userName');
                     localStorage.removeItem('userRole');
+                    localStorage.removeItem('token');
                     setLoggedInUI(false);
                     return;
                 }

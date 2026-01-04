@@ -14,6 +14,22 @@ let teamFilterCustomSelect = null;
 
 // Cargar jugadores, ligas y nacionalidades al iniciar la página
 window.onload = async () => {
+  // Verificar autenticación y rol de admin antes de cargar nada
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  if (!token) {
+    alert('Debes iniciar sesión para acceder al panel de administración');
+    window.location.href = '/login';
+    return;
+  }
+
+  if (userRole !== 'admin') {
+    alert('No tienes permisos para acceder al panel de administración');
+    window.location.href = '/';
+    return;
+  }
+
   try {
     // Cargar ligas y equipos en paralelo
     await Promise.all([loadLeagues(), loadTeamsData()]);

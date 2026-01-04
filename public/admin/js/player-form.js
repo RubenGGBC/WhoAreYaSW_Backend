@@ -16,6 +16,22 @@ let teamSelect = null;
 let leagueSelect = null;
 
 window.onload = async () => {
+  // Verificar autenticación y rol de admin
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  if (!token) {
+    alert('Debes iniciar sesión para acceder al panel de administración');
+    window.location.href = '/login';
+    return;
+  }
+
+  if (userRole !== 'admin') {
+    alert('No tienes permisos para acceder al panel de administración');
+    window.location.href = '/';
+    return;
+  }
+
   try {
     await loadFormData();
 
