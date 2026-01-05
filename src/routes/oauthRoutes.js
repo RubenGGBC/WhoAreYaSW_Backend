@@ -20,13 +20,23 @@ router.get('/auth/google/callback',
             if (req.user) {
                 req.session.userId = req.user._id;
                 req.session.userRole = req.user.role;
-            }
-            
-            // Redirigir según rol
-            if (req.user && req.user.role === 'admin') {
-                res.redirect('/admin');
+                
+                // Forzar guardar sesión antes de redirigir
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('Error guardando sesión:', err);
+                        return res.redirect('/login?error=session');
+                    }
+                    
+                    // Redirigir según rol
+                    if (req.user.role === 'admin') {
+                        res.redirect('/admin/');
+                    } else {
+                        res.redirect('/');
+                    }
+                });
             } else {
-                res.redirect('/');
+                res.redirect('/login?error=nouser');
             }
         } catch (error) {
             console.error('Error en callback de Google:', error);
@@ -52,13 +62,23 @@ router.get('/auth/github/callback',
             if (req.user) {
                 req.session.userId = req.user._id;
                 req.session.userRole = req.user.role;
-            }
-            
-            // Redirigir según rol
-            if (req.user && req.user.role === 'admin') {
-                res.redirect('/admin');
+                
+                // Forzar guardar sesión antes de redirigir
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('Error guardando sesión:', err);
+                        return res.redirect('/login?error=session');
+                    }
+                    
+                    // Redirigir según rol
+                    if (req.user.role === 'admin') {
+                        res.redirect('/admin/');
+                    } else {
+                        res.redirect('/');
+                    }
+                });
             } else {
-                res.redirect('/');
+                res.redirect('/login?error=nouser');
             }
         } catch (error) {
             console.error('Error en callback de GitHub:', error);

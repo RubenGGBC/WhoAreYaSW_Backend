@@ -28,9 +28,14 @@ module.exports = function(passport) {
         try {
             console.log('Google profile recibido:', profile.id);
 
-            // Buscar usuario por email
+            // Buscar usuario por email o por providerId
             const email = profile.emails[0].value;
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ 
+                $or: [
+                    { email },
+                    { provider: 'google', providerId: profile.id }
+                ]
+            });
 
             if (!user) {
                 // Crear nuevo usuario
@@ -42,12 +47,15 @@ module.exports = function(passport) {
                     name: profile.name.givenName,
                     lastName: profile.name.familyName || '',
                     email: email,
-                    password: 'oauth-provided-' + Date.now(), // Contraseña ficticia única
+                    password: 'oauth-provided-' + Date.now(),
                     role: role,
-                    isOAuthUser: true
+                    provider: 'google',
+                    providerId: profile.id
                 });
                 await user.save();
                 console.log('Nuevo usuario OAuth creado:', email);
+            } else {
+                console.log('Usuario OAuth existente encontrado:', email);
             }
 
             done(null, user);
@@ -75,7 +83,12 @@ module.exports = function(passport) {
                 email = `${profile.username}@github.com`;
             }
 
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ 
+                $or: [
+                    { email },
+                    { provider: 'github', providerId: profile.id }
+                ]
+            });
 
             if (!user) {
                 const userCount = await User.countDocuments();
@@ -87,10 +100,13 @@ module.exports = function(passport) {
                     email: email,
                     password: 'oauth-provided-' + Date.now(),
                     role: role,
-                    isOAuthUser: true
+                    provider: 'github',
+                    providerId: profile.id
                 });
                 await user.save();
                 console.log('Nuevo usuario GitHub creado:', email);
+            } else {
+                console.log('Usuario GitHub existente encontrado:', email);
             }
 
             done(null, user);

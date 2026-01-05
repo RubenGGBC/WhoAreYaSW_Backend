@@ -9,8 +9,18 @@ const UserSchema = new mongoose.Schema({
     },
     lastName:{
         type:String,
-        required:true,
-        minlength:2,
+        required:function() {
+            return this.provider === 'local';
+        },
+        validate: {
+            validator: function(v) {
+                if (this.provider === 'local') {
+                    return v && v.length >= 2;
+                }
+                return true;
+            },
+            message: 'lastName must be at least 2 characters long for local users'
+        }
     },
     email:{
         type:String,
