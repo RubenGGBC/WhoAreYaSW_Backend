@@ -382,6 +382,10 @@ El servidor estará disponible en `http://localhost:3001` (o en el que se haya c
 
 ---
 
-Para más información sobre WhoIsThisPokemon, leer su [README](https://github.com/RubenGGBC/WhoAreYaSW_Backend/blob/master/WhoIsThisPokemon/README.md)
+## Más información
+
+- Para más información sobre WhoAreYa, leer el [Informe Técnico](https://github.com/RubenGGBC/WhoAreYaSW_Backend/blob/master/WhoAreYa-Backend.pdf).
+
+- Para más información sobre WhoIsThisPokemon, leer su [README](https://github.com/RubenGGBC/WhoAreYaSW_Backend/blob/master/WhoIsThisPokemon/README.md).
 
 ---
