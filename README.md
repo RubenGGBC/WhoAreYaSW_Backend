@@ -176,7 +176,7 @@ WhoAreYaSW_Backend/
 │   │  ├─ `authController.js`
 │   │  ├─ `gameController.js`
 │   │  ├─ `oauthController.js`
-│   │  └─ `oauthRoutes.js`  
+│   │  └─ `playerController.js`  
 │   ├─ db/
 │   │  ├─ `connection.js`
 │   │  └─ seeders/
