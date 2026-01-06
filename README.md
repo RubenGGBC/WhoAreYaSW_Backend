@@ -324,8 +324,7 @@ El servidor estará disponible en `http://localhost:3000` (o en el que se haya c
 - [Milestone 3](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-milestone3)
 - [Milestone 4](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-milestone4)
 - [Milestone 5](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-milestone5)
-- [Milestone 6](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-milestone6)
-- [WhoIsThisPokemon](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-WhoIsThisPokemon)
+- [Milestone 6 + WhoIsThisPokemon](https://github.com/RubenGGBC/WhoAreYaSW_Backend/releases/tag/backend-milestone6%2Bwhoisthispokemon)
 
 ---
 
