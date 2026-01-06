@@ -5,7 +5,8 @@
   "main": "public/index.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test jest --verbose",
-    "test:watch": "cross-env NODE_ENV=test jest --watch"
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "seed": "node src/db/seeders/seedPokemon.js && node src/db/seeders/seedSolutions.js"
   },
   "private": true,
   "dependencies": {
