@@ -14,15 +14,11 @@ let teamFilterCustomSelect = null;
 
 // Verificar autenticación antes de cargar cualquier cosa
 function checkAuth() {
-  const token = localStorage.getItem('token');
+  // El servidor ya verifica autenticación via middleware
+  // Solo verificamos userRole si está disponible en localStorage
   const userRole = localStorage.getItem('userRole');
 
-  if (!token) {
-    window.location.href = '/login';
-    return false;
-  }
-
-  if (userRole !== 'admin') {
+  if (userRole && userRole !== 'admin') {
     window.location.href = '/';
     return false;
   }

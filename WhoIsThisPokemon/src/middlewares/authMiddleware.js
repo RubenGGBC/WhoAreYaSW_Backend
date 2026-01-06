@@ -29,7 +29,14 @@ const isAuthenticated = async (req, res, next) => {
             return next();
         }
         
-        // Si no hay token JWT, intentar con sesión de Passport (OAuth)
+        // Intentar con Passport (req.user se carga si hay sesión válida)
+        if (req.user) {
+            req.userId = req.user._id;
+            req.userRole = req.user.role;
+            return next();
+        }
+        
+        // Intentar con sesión manual (login sin OAuth)
         if (req.session && req.session.userId) {
             req.userId = req.session.userId;
             req.userRole = req.session.userRole;

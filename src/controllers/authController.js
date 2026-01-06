@@ -144,6 +144,21 @@ exports.login = async (req, res) => {
             role: user.role
         });
         
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000
+        });
+        
+        req.session.userId = user._id;
+        req.session.user = {
+            id: user._id,
+            name: user.name,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role
+        };
+        
         res.status(200).json({
             success: true,
             data: {

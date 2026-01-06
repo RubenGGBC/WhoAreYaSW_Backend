@@ -1,14 +1,16 @@
-exports.oauthSuccess = (req, res) => {
+exports.handleCallback = (req, res) => {
     try {
-        // Guardar info de usuario en sesión (como ya lo hace passport)
-        // Redirigir según rol
-        if (req.user.role === 'admin') {
-            res.redirect('/admin');
+        if (req.user) {
+            if (req.user.role === 'admin') {
+                return res.redirect('/admin/');
+            } else {
+                return res.redirect('/');
+            }
         } else {
-            res.redirect('/');
+            res.redirect('/login?error=nouser');
         }
     } catch (error) {
-        console.error('Error en OAuth success:', error);
+        console.error('Error en OAuth callback:', error);
         res.redirect('/login?error=oauth');
     }
 };

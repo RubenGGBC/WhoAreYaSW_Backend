@@ -3,6 +3,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const passport = require('passport');
 const authController = require('../controllers/authController');
+const oauthController = require('../controllers/oauthController');
 const { isAuthenticated } = require('../middlewares/authMiddleware');
 
 // Rutas para renderizar vistas (GET) - DIRECTAS
@@ -32,11 +33,7 @@ router.get('/auth/google',
 
 router.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/login?error=google' }),
-    (req, res) => {
-        req.session.userId = req.user._id;
-        req.session.userRole = req.user.role;
-        res.redirect('/');
-    }
+    oauthController.handleCallback
 );
 
 // Rutas OAuth - GitHub
@@ -46,11 +43,7 @@ router.get('/auth/github',
 
 router.get('/auth/github/callback',
     passport.authenticate('github', { failureRedirect: '/login?error=github' }),
-    (req, res) => {
-        req.session.userId = req.user._id;
-        req.session.userRole = req.user.role;
-        res.redirect('/');
-    }
+    oauthController.handleCallback
 );
 
 // Rutas públicas (sin autenticación)

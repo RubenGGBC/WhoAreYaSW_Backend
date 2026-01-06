@@ -28,10 +28,18 @@ exports.isAuthenticated = async (req, res, next) => {
             return next();
         }
         
-        // Si no hay token JWT, intentar con sesión de Passport (OAuth)
-        if (req.session.userId && req.user) {
+        // Intentar con sesión (OAuth o login manual)
+        // req.user se carga automáticamente por Passport si hay sesión válida
+        if (req.user) {
             req.userId = req.user._id;
             req.userRole = req.user.role;
+            return next();
+        }
+        
+        // Intentar con req.session.userId (login manual)
+        if (req.session.userId && req.session.user) {
+            req.userId = req.session.userId;
+            req.userRole = req.session.user.role;
             return next();
         }
         
@@ -40,7 +48,7 @@ exports.isAuthenticated = async (req, res, next) => {
             success: false,
             error: {
                 code: 'NOT_AUTHENTICATED',
-                message: 'Token no proporcionado'
+                message: 'No autenticado'
             }
         });
     } catch (error) {

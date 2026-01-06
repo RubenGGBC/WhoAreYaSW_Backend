@@ -3,10 +3,11 @@ const path = require('path');
 
 exports.getAdminDashboard = async (req, res) => {
   try {
+    const user = req.session.user || req.user || null;
     res.render('admin/dashboard', {
       title: 'Panel de Administración',
       page: 'dashboard',
-      user: req.session.user || null,
+      user: user,
       message: req.session.message || null
     });
 
@@ -20,10 +21,11 @@ exports.getAdminDashboard = async (req, res) => {
 
 exports.getNewPlayerForm = async (req, res) => {
   try {
+    const user = req.session.user || req.user || null;
     res.render('admin/new-player', {
       title: 'Nuevo Jugador',
       page: 'dashboard',
-      user: req.session.user || null
+      user: user
     });
   } catch (error) {
     console.error('Error al renderizar formulario:', error);
@@ -34,11 +36,12 @@ exports.getNewPlayerForm = async (req, res) => {
 exports.getEditPlayerForm = async (req, res) => {
   try {
     const { id } = req.params;
+    const user = req.session.user || req.user || null;
 
     res.render('admin/edit-player', {
       title: 'Editar Jugador',
       page: 'dashboard',
-      user: req.session.user || null,
+      user: user,
       playerId: id
     });
   } catch (error) {

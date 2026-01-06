@@ -99,7 +99,7 @@ async function initGame() {
         <h3>Error al cargar el juego</h3>
         <p>No se pudo conectar con el servidor. Por favor:</p>
         <ol>
-          <li>Verifica que el servidor esté corriendo en <code>http://localhost:3001</code></li>
+          <li>Verifica que el servidor esté corriendo en <code>http://localhost:3000</code></li>
           <li>Ejecuta: <code>npm start</code> en la carpeta del proyecto</li>
           <li>Si es la primera vez, ejecuta: <code>npm run seed</code></li>
           <li>Recarga la página</li>

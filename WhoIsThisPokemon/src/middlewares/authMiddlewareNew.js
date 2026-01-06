@@ -4,7 +4,14 @@ const User = require('../models/User');
 // Middleware para vistas que necesitan autenticación (renderiza páginas)
 exports.isAuthenticatedView = async (req, res, next) => {
     try {
-        // Intentar con sesión primero (más común para navegación)
+        // Intentar con Passport primero (OAuth)
+        if (req.user) {
+            req.userId = req.user._id;
+            req.userRole = req.user.role;
+            return next();
+        }
+
+        // Intentar con sesión (login manual)
         if (req.session && req.session.userId) {
             const user = await User.findById(req.session.userId);
             if (user) {

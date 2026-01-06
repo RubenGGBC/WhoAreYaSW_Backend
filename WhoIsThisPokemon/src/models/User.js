@@ -9,14 +9,14 @@ const UserSchema = new mongoose.Schema({
     },
     lastName:{
         type:String,
-        required:true,
+        required:false,
         minlength:2,
     },
     email:{
         type:String,
         required:true,
         unique:true,
-        match:/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+        match:/^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/,
     },
     password:{
         type:String,

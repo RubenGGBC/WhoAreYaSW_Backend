@@ -1,6 +1,7 @@
 const express = require('express');
 const passport = require('passport');
 const router = express.Router();
+const oauthController = require('../controllers/oauthController');
 
 router.get('/auth/google',
     passport.authenticate('google', {
@@ -14,35 +15,12 @@ router.get('/auth/google/callback',
         failureRedirect: '/login?error=google',
         failureMessage: true
     }),
-    (req, res) => {
-        try {
-            // Establecer variables de sesión manualmente (igual que login regular)
-            if (req.user) {
-                req.session.userId = req.user._id;
-                req.session.userRole = req.user.role;
-                
-                // Forzar guardar sesión antes de redirigir
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('Error guardando sesión:', err);
-                        return res.redirect('/login?error=session');
-                    }
-                    
-                    // Redirigir según rol
-                    if (req.user.role === 'admin') {
-                        res.redirect('/admin/');
-                    } else {
-                        res.redirect('/');
-                    }
-                });
-            } else {
-                res.redirect('/login?error=nouser');
-            }
-        } catch (error) {
-            console.error('Error en callback de Google:', error);
-            res.redirect('/login?error=oauth');
-        }
-    }
+    (req, res, next) => {
+        console.log('Google callback - req.user:', req.user ? req.user.email : 'undefined');
+        console.log('Google callback - req.session:', req.sessionID);
+        next();
+    },
+    oauthController.handleCallback
 );
 
 router.get('/auth/github',
@@ -56,35 +34,12 @@ router.get('/auth/github/callback',
         failureRedirect: '/login?error=github',
         failureMessage: true
     }),
-    (req, res) => {
-        try {
-            // Establecer variables de sesión manualmente (igual que login regular)
-            if (req.user) {
-                req.session.userId = req.user._id;
-                req.session.userRole = req.user.role;
-                
-                // Forzar guardar sesión antes de redirigir
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('Error guardando sesión:', err);
-                        return res.redirect('/login?error=session');
-                    }
-                    
-                    // Redirigir según rol
-                    if (req.user.role === 'admin') {
-                        res.redirect('/admin/');
-                    } else {
-                        res.redirect('/');
-                    }
-                });
-            } else {
-                res.redirect('/login?error=nouser');
-            }
-        } catch (error) {
-            console.error('Error en callback de GitHub:', error);
-            res.redirect('/login?error=oauth');
-        }
-    }
+    (req, res, next) => {
+        console.log('GitHub callback - req.user:', req.user ? req.user.email : 'undefined');
+        console.log('GitHub callback - req.session:', req.sessionID);
+        next();
+    },
+    oauthController.handleCallback
 );
 
 router.get('/auth/logout', (req, res) => {

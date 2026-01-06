@@ -1,6 +1,6 @@
 export { fetchJSON, fetchPokemon, fetchSolution, fetchCurrentGame };
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3000/api';
 
 async function fetchJSON(what) {
   // Versión BACKEND (igual filosofía que el juego de fútbol)
